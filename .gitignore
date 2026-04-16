@@ -28,3 +28,6 @@ build/
 
 # Coverage
 coverage/
+
+# Test temp files
+tests/shared-data.json

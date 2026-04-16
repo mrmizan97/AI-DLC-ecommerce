@@ -1,14 +1,8 @@
-// Shared state across all test files
-// Populated by setup.js beforeAll
+const fs = require("fs");
+const path = require("path");
 
-module.exports = {
-  adminToken: null,
-  adminId: null,
-  customerToken: null,
-  customerId: null,
-  categoryId: null,
-  tagId: null,
-  tagId2: null,
-  productId: null,
-  productId2: null,
-};
+const data = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "shared-data.json"), "utf-8")
+);
+
+module.exports = data;

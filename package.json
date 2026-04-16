@@ -15,7 +15,9 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "setupFilesAfterSetup": ["<rootDir>/tests/setup.js"],
+    "setupFiles": ["<rootDir>/tests/env.js"],
+    "globalSetup": "<rootDir>/tests/globalSetup.js",
+    "globalTeardown": "<rootDir>/tests/globalTeardown.js",
     "testSequencer": "<rootDir>/tests/sequencer.js"
   },
   "keywords": [],
