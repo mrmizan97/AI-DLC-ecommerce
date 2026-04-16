@@ -18,6 +18,7 @@ A RESTful CRUD API built with Express.js, Sequelize ORM, and MySQL. Follows a cl
 | CORS       | cors               |
 | Auth       | jsonwebtoken (JWT) |
 | Hashing    | bcryptjs           |
+| Migrations | sequelize-cli      |
 
 ---
 
@@ -26,6 +27,9 @@ A RESTful CRUD API built with Express.js, Sequelize ORM, and MySQL. Follows a cl
 ```
 ai-dlc-crud/
 ├── .env                                  # Environment variables
+├── .env.example                          # Env template (committed)
+├── .gitignore
+├── .sequelizerc                          # Sequelize CLI path config
 ├── index.js                              # Application entry point
 ├── package.json
 ├── CONTEXT.md                            # This file — global project context
@@ -68,7 +72,10 @@ ai-dlc-crud/
 │       └── order.routes.md
 └── src/
     ├── config/
-    │   └── database.js                   # Sequelize instance & DB connection
+    │   ├── database.js                   # Sequelize instance & DB connection
+    │   └── config.js                     # Sequelize CLI migration config
+    ├── migrations/                       # Database migration files
+    ├── seeders/                          # Database seed files
     ├── model/
     │   ├── Product.js                    # Product model definition
     │   ├── Category.js                   # Category model definition
@@ -157,6 +164,47 @@ JWT_EXPIRES_IN=7d
 
 ---
 
+## Database Migrations
+
+The project uses **sequelize-cli** for migration management instead of `sequelize.sync()`.
+
+### Migration Files: `src/migrations/`
+
+| File | Table |
+|------|-------|
+| `20260416000001-create-categories.js` | `categories` |
+| `20260416000002-create-tags.js` | `tags` |
+| `20260416000003-create-users.js` | `users` |
+| `20260416000004-create-products.js` | `products` (FK → categories) |
+| `20260416000005-create-product-tags.js` | `product_tags` (FK → products, tags) |
+| `20260416000006-create-orders.js` | `orders` (FK → users) |
+| `20260416000007-create-order-items.js` | `order_items` (FK → orders, products) |
+
+### Migration Commands
+
+```bash
+npm run db:migrate            # Run all pending migrations
+npm run db:migrate:undo       # Undo last migration
+npm run db:migrate:undo:all   # Undo all migrations
+npm run db:seed               # Run all seeders
+npm run db:seed:undo          # Undo all seeders
+```
+
+### Migration Naming Convention
+
+- Format: `YYYYMMDDHHMMSS-<action>-<table>.js` (e.g., `20260416000001-create-categories.js`).
+- Each file exports `up` (apply) and `down` (rollback) functions.
+- Tables with foreign keys must be created **after** the referenced table.
+- All tables include `created_at` and `updated_at` timestamp columns.
+- Foreign keys define `onUpdate: "CASCADE"` and `onDelete: "RESTRICT"` or `"CASCADE"` as appropriate.
+
+### Config Files
+
+- `.sequelizerc` — tells sequelize-cli where to find config, migrations, and seeders.
+- `src/config/config.js` — DB credentials per environment (reads from `.env`).
+
+---
+
 ## Database Config (`src/config/database.js`)
 
 - Create a single Sequelize instance using env vars.
@@ -194,9 +242,10 @@ A 4-argument Express middleware `(err, req, res, next)`:
    - `app.use("/api/orders", orderRoutes)`
 6. Add health-check route: `GET /` → `{ message: "AI DLC CRUD API is running" }`.
 7. Apply `errorHandler` as last middleware.
-8. Sync database with `sequelize.sync({ alter: true })`.
+8. Authenticate database connection with `sequelize.authenticate()`.
 9. On success, start server on `PORT` and log message.
 10. On failure, log error message.
+11. **Note**: Tables are managed by migrations (`npm run db:migrate`), not `sequelize.sync()`.
 
 ---
 

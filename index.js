@@ -31,13 +31,13 @@ app.get("/", (req, res) => {
 app.use(errorHandler);
 
 sequelize
-  .sync({ alter: true })
+  .authenticate()
   .then(() => {
-    console.log("Database synced successfully");
+    console.log("Database connected successfully");
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
   })
   .catch((err) => {
-    console.error("Failed to sync database:", err.message);
+    console.error("Failed to connect database:", err.message);
   });
