@@ -163,6 +163,56 @@ function validateUserUpdate(req, res, next) {
   next();
 }
 
+function validateOrder(req, res, next) {
+  const { shipping_address, phone, items } = req.body;
+  const errors = [];
+
+  if (!shipping_address || !String(shipping_address).trim()) {
+    errors.push("Shipping address is required");
+  }
+
+  if (!phone || !String(phone).trim()) {
+    errors.push("Phone is required");
+  } else if (String(phone).length > 20) {
+    errors.push("Phone must be 20 characters or less");
+  }
+
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    errors.push("Items must be a non-empty array");
+  } else {
+    items.forEach((item, index) => {
+      if (!item.product_id || !Number.isInteger(Number(item.product_id)) || Number(item.product_id) <= 0) {
+        errors.push(`items[${index}].product_id must be a positive integer`);
+      }
+      if (!item.quantity || !Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1) {
+        errors.push(`items[${index}].quantity must be an integer >= 1`);
+      }
+    });
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({ success: false, message: "Validation failed", errors });
+  }
+
+  next();
+}
+
+function validateOrderStatus(req, res, next) {
+  const { status } = req.body;
+  const errors = [];
+
+  const validStatuses = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
+  if (!status || !validStatuses.includes(status)) {
+    errors.push(`Status must be one of: ${validStatuses.join(", ")}`);
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({ success: false, message: "Validation failed", errors });
+  }
+
+  next();
+}
+
 module.exports = {
   validateProduct,
   validateCategory,
@@ -170,4 +220,6 @@ module.exports = {
   validateRegister,
   validateLogin,
   validateUserUpdate,
+  validateOrder,
+  validateOrderStatus,
 };

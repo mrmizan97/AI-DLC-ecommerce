@@ -8,6 +8,7 @@ const userRoutes = require("./src/routes/userRoutes");
 const productRoutes = require("./src/routes/productRoutes");
 const categoryRoutes = require("./src/routes/categoryRoutes");
 const tagRoutes = require("./src/routes/tagRoutes");
+const orderRoutes = require("./src/routes/orderRoutes");
 const errorHandler = require("./src/middleware/errorHandler");
 
 const app = express();
@@ -21,6 +22,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/tags", tagRoutes);
+app.use("/api/orders", orderRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "AI DLC CRUD API is running" });

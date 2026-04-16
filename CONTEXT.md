@@ -54,12 +54,18 @@ ai-dlc-crud/
 │   │   ├── user.controller.md
 │   │   ├── user.validation.md
 │   │   └── user.routes.md
-│   └── auth/                             # Auth domain context
-│       ├── auth.middleware.md
-│       ├── auth.service.md
-│       ├── auth.controller.md
-│       ├── auth.validation.md
-│       └── auth.routes.md
+│   ├── auth/                             # Auth domain context
+│   │   ├── auth.middleware.md
+│   │   ├── auth.service.md
+│   │   ├── auth.controller.md
+│   │   ├── auth.validation.md
+│   │   └── auth.routes.md
+│   └── order/                            # Order domain context
+│       ├── order.model.md
+│       ├── order.service.md
+│       ├── order.controller.md
+│       ├── order.validation.md
+│       └── order.routes.md
 └── src/
     ├── config/
     │   └── database.js                   # Sequelize instance & DB connection
@@ -68,19 +74,23 @@ ai-dlc-crud/
     │   ├── Category.js                   # Category model definition
     │   ├── Tag.js                        # Tag model definition
     │   ├── User.js                       # User model (admin + customer)
+    │   ├── Order.js                      # Order model
+    │   ├── OrderItem.js                  # Order item model
     │   └── index.js                      # Barrel export + all associations
     ├── service/
     │   ├── productService.js             # Product business service
     │   ├── categoryService.js            # Category business service
     │   ├── tagService.js                 # Tag business service
     │   ├── userService.js                # User management service
-    │   └── authService.js                # Authentication service
+    │   ├── authService.js                # Authentication service
+    │   └── orderService.js              # Order business service
     ├── controller/
     │   ├── productController.js          # Product HTTP handlers
     │   ├── categoryController.js         # Category HTTP handlers
     │   ├── tagController.js              # Tag HTTP handlers
     │   ├── userController.js             # User management handlers
-    │   └── authController.js             # Auth handlers (register/login/profile)
+    │   ├── authController.js             # Auth handlers (register/login/profile)
+    │   └── orderController.js            # Order HTTP handlers
     ├── middleware/
     │   ├── errorHandler.js               # Global error-handling middleware
     │   ├── auth.js                       # authenticate + authorizeAdmin middleware
@@ -90,7 +100,8 @@ ai-dlc-crud/
         ├── categoryRoutes.js             # Category route definitions
         ├── tagRoutes.js                  # Tag route definitions
         ├── userRoutes.js                 # User management routes (admin-only)
-        └── authRoutes.js                 # Auth routes (public + protected)
+        ├── authRoutes.js                 # Auth routes (public + protected)
+        └── orderRoutes.js               # Order route definitions
 ```
 
 ---
@@ -180,6 +191,7 @@ A 4-argument Express middleware `(err, req, res, next)`:
    - `app.use("/api/products", productRoutes)`
    - `app.use("/api/categories", categoryRoutes)`
    - `app.use("/api/tags", tagRoutes)`
+   - `app.use("/api/orders", orderRoutes)`
 6. Add health-check route: `GET /` → `{ message: "AI DLC CRUD API is running" }`.
 7. Apply `errorHandler` as last middleware.
 8. Sync database with `sequelize.sync({ alter: true })`.
@@ -209,6 +221,7 @@ A 4-argument Express middleware `(err, req, res, next)`:
 | Tag      | `docs/tag/`       | Product tags (M:M with Product)      |
 | User     | `docs/user/`      | User accounts (admin + customer)     |
 | Auth     | `docs/auth/`      | Registration, login, JWT, middleware |
+| Order    | `docs/order/`     | Orders with items, stock management  |
 
 ---
 
@@ -219,7 +232,12 @@ Category (1) ──── (M) Product (M) ──── (M) Tag
                          │
                     product_tags
                    (junction table)
+
+User (1) ──── (M) Order (1) ──── (M) OrderItem (M) ──── (1) Product
 ```
 
-- **Category → Product**: One-to-Many. A category has many products. FK: `products.category_id`.
+- **Category → Product**: One-to-Many. FK: `products.category_id`.
 - **Product ↔ Tag**: Many-to-Many. Through `product_tags` junction table.
+- **User → Order**: One-to-Many. FK: `orders.user_id`.
+- **Order → OrderItem**: One-to-Many. FK: `order_items.order_id`.
+- **Product → OrderItem**: One-to-Many. FK: `order_items.product_id`.
