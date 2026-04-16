@@ -11,7 +11,12 @@
     "db:migrate:undo:all": "npx sequelize-cli db:migrate:undo:all",
     "db:seed": "npx sequelize-cli db:seed:all",
     "db:seed:undo": "npx sequelize-cli db:seed:undo:all",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --runInBand --forceExit --detectOpenHandles"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterSetup": ["<rootDir>/tests/setup.js"],
+    "testSequencer": "<rootDir>/tests/sequencer.js"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +31,8 @@
     "sequelize": "^6.37.8"
   },
   "devDependencies": {
-    "sequelize-cli": "^6.6.5"
+    "jest": "^30.3.0",
+    "sequelize-cli": "^6.6.5",
+    "supertest": "^7.2.2"
   }
 }
