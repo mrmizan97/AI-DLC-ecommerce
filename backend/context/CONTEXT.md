@@ -2,7 +2,7 @@
 
 ## Overview
 
-A RESTful CRUD API built with Express.js, Sequelize ORM, and MySQL. Follows a clean layered architecture. Each domain (e.g., Product) has its own context docs under `docs/<domain>/`.
+A RESTful CRUD API built with Express.js, Sequelize ORM, and MySQL. Follows a clean layered architecture. Each domain (e.g., Product) has its own context docs under `context/<domain>/`.
 
 ---
 
@@ -26,89 +26,62 @@ A RESTful CRUD API built with Express.js, Sequelize ORM, and MySQL. Follows a cl
 
 ```
 ai-dlc-crud/
-├── .env                                  # Environment variables
-├── .env.example                          # Env template (committed)
 ├── .gitignore
-├── .sequelizerc                          # Sequelize CLI path config
-├── index.js                              # Application entry point
-├── package.json
-├── CONTEXT.md                            # This file — global project context
-├── docs/
-│   ├── product/                          # Product domain context
-│   │   ├── product.model.md              # Model schema, relationships
-│   │   ├── product.service.md              # Business service methods
-│   │   ├── product.controller.md         # HTTP handlers
-│   │   ├── product.validation.md         # Request validation rules
-│   │   └── product.routes.md             # Route definitions
-│   ├── category/                         # Category domain context
-│   │   ├── category.model.md
-│   │   ├── category.service.md
-│   │   ├── category.controller.md
-│   │   ├── category.validation.md
-│   │   └── category.routes.md
-│   ├── tag/                              # Tag domain context
-│   │   ├── tag.model.md
-│   │   ├── tag.service.md
-│   │   ├── tag.controller.md
-│   │   ├── tag.validation.md
-│   │   └── tag.routes.md
-│   ├── user/                             # User domain context
-│   │   ├── user.model.md
-│   │   ├── user.service.md
-│   │   ├── user.controller.md
-│   │   ├── user.validation.md
-│   │   └── user.routes.md
-│   ├── auth/                             # Auth domain context
-│   │   ├── auth.middleware.md
-│   │   ├── auth.service.md
-│   │   ├── auth.controller.md
-│   │   ├── auth.validation.md
-│   │   └── auth.routes.md
-│   └── order/                            # Order domain context
-│       ├── order.model.md
-│       ├── order.service.md
-│       ├── order.controller.md
-│       ├── order.validation.md
-│       └── order.routes.md
-└── src/
-    ├── config/
-    │   ├── database.js                   # Sequelize instance & DB connection
-    │   └── config.js                     # Sequelize CLI migration config
-    ├── migrations/                       # Database migration files
-    ├── seeders/                          # Database seed files
-    ├── model/
-    │   ├── Product.js                    # Product model definition
-    │   ├── Category.js                   # Category model definition
-    │   ├── Tag.js                        # Tag model definition
-    │   ├── User.js                       # User model (admin + customer)
-    │   ├── Order.js                      # Order model
-    │   ├── OrderItem.js                  # Order item model
-    │   └── index.js                      # Barrel export + all associations
-    ├── service/
-    │   ├── productService.js             # Product business service
-    │   ├── categoryService.js            # Category business service
-    │   ├── tagService.js                 # Tag business service
-    │   ├── userService.js                # User management service
-    │   ├── authService.js                # Authentication service
-    │   └── orderService.js              # Order business service
-    ├── controller/
-    │   ├── productController.js          # Product HTTP handlers
-    │   ├── categoryController.js         # Category HTTP handlers
-    │   ├── tagController.js              # Tag HTTP handlers
-    │   ├── userController.js             # User management handlers
-    │   ├── authController.js             # Auth handlers (register/login/profile)
-    │   └── orderController.js            # Order HTTP handlers
-    ├── middleware/
-    │   ├── errorHandler.js               # Global error-handling middleware
-    │   ├── auth.js                       # authenticate + authorizeAdmin middleware
-    │   └── validate.js                   # All validation middlewares
-    └── routes/
-        ├── productRoutes.js              # Product route definitions
-        ├── categoryRoutes.js             # Category route definitions
-        ├── tagRoutes.js                  # Tag route definitions
-        ├── userRoutes.js                 # User management routes (admin-only)
-        ├── authRoutes.js                 # Auth routes (public + protected)
-        └── orderRoutes.js               # Order route definitions
+└── backend/                              # All backend code lives here
+    ├── .env                              # Environment variables
+    ├── .env.example                      # Env template (committed)
+    ├── .sequelizerc                      # Sequelize CLI path config
+    ├── CONTEXT.md                        # This file — global project context
+    ├── index.js                          # Application entry point
+    ├── package.json
+    ├── tests/                            # Integration tests (Jest + supertest)
+    ├── context/                          # Domain-specific context docs
+    │   ├── product/                      # Product context (model, service, controller, validation, routes)
+    │   ├── category/                     # Category context
+    │   ├── tag/                          # Tag context
+    │   ├── user/                         # User context
+    │   ├── auth/                         # Auth context (middleware + login/register)
+    │   └── order/                        # Order context
+    └── src/
+        ├── app.js                        # Express app (exported for tests)
+        ├── config/
+        │   ├── database.js               # Sequelize instance & DB connection
+        │   └── config.js                 # Sequelize CLI migration config
+        ├── migrations/                   # Database migration files
+        ├── seeders/                      # Database seed files
+        ├── model/
+        │   ├── Product.js
+        │   ├── Category.js
+        │   ├── Tag.js
+        │   ├── User.js                   # User (admin + customer)
+        │   ├── Order.js
+        │   ├── OrderItem.js
+        │   └── index.js                  # Barrel export + all associations
+        ├── service/
+        │   ├── productService.js
+        │   ├── categoryService.js
+        │   ├── tagService.js
+        │   ├── userService.js
+        │   ├── authService.js
+        │   └── orderService.js
+        ├── controller/
+        │   ├── productController.js
+        │   ├── categoryController.js
+        │   ├── tagController.js
+        │   ├── userController.js
+        │   ├── authController.js
+        │   └── orderController.js
+        ├── middleware/
+        │   ├── errorHandler.js           # Global error-handling middleware
+        │   ├── auth.js                   # authenticate + authorizeAdmin
+        │   └── validate.js               # All validation middlewares
+        └── routes/
+            ├── productRoutes.js
+            ├── categoryRoutes.js
+            ├── tagRoutes.js
+            ├── userRoutes.js
+            ├── authRoutes.js
+            └── orderRoutes.js
 ```
 
 ---
@@ -265,12 +238,12 @@ A 4-argument Express middleware `(err, req, res, next)`:
 
 | Domain   | Docs Location     | Description                          |
 | -------- | ----------------- | ------------------------------------ |
-| Product  | `docs/product/`   | Products with category FK & tags M2M |
-| Category | `docs/category/`  | Product categories (1:M with Product)|
-| Tag      | `docs/tag/`       | Product tags (M:M with Product)      |
-| User     | `docs/user/`      | User accounts (admin + customer)     |
-| Auth     | `docs/auth/`      | Registration, login, JWT, middleware |
-| Order    | `docs/order/`     | Orders with items, stock management  |
+| Product  | `context/product/`   | Products with category FK & tags M2M |
+| Category | `context/category/`  | Product categories (1:M with Product)|
+| Tag      | `context/tag/`       | Product tags (M:M with Product)      |
+| User     | `context/user/`      | User accounts (admin + customer)     |
+| Auth     | `context/auth/`      | Registration, login, JWT, middleware |
+| Order    | `context/order/`     | Orders with items, stock management  |
 
 ---
 

@@ -1,15 +1,24 @@
+# Dependencies
 node_modules/
 package-lock.json
+.pnp
+.pnp.js
+.yarn/install-state.gz
 
 # Environment
 .env
 .env.local
+.env.development.local
+.env.test.local
 .env.production
+.env.production.local
 
 # Logs
 logs/
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # OS files
 .DS_Store
@@ -22,7 +31,7 @@ desktop.ini
 *.swp
 *.swo
 
-# Build
+# Build output
 dist/
 build/
 
@@ -30,4 +39,18 @@ build/
 coverage/
 
 # Test temp files
-tests/shared-data.json
+backend/tests/shared-data.json
+
+# ─── Next.js (frontend) ─────────────────────────────────────────────────────
+frontend/.next/
+frontend/out/
+frontend/next-env.d.ts
+frontend/.vercel
+frontend/*.tsbuildinfo
+
+# Turbo / Nx / other bundlers
+.turbo/
+.cache/
+
+# Debug
+.pnpm-debug.log*
