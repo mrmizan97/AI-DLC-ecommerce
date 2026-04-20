@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Search, ShoppingCart, User, LogOut, Package, Menu, LayoutDashboard } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
+import NotificationBell from "@/components/NotificationBell";
 
 export default function Header() {
   const router = useRouter();
@@ -61,6 +62,8 @@ export default function Header() {
                 </span>
               )}
             </Link>
+
+            {user && <NotificationBell />}
 
             {user ? (
               <div className="relative group">

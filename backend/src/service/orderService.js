@@ -1,5 +1,6 @@
 const { Op } = require("sequelize");
 const { sequelize, Order, OrderItem, Product, User } = require("../model");
+const { emitToAdmins, emitToUser } = require("../socket");
 
 const orderIncludes = [
   { model: User, as: "user", attributes: ["id", "name", "email"] },
@@ -50,7 +51,14 @@ const orderService = {
       }
 
       await transaction.commit();
-      return await Order.findByPk(order.id, { include: orderIncludes });
+      const fullOrder = await Order.findByPk(order.id, { include: orderIncludes });
+
+      emitToAdmins("order:created", {
+        order: fullOrder,
+        message: `New order #${fullOrder.id} from ${fullOrder.user?.name}`,
+      });
+
+      return fullOrder;
     } catch (error) {
       await transaction.rollback();
       throw error;
@@ -98,7 +106,14 @@ const orderService = {
     if (order.status === "cancelled" || order.status === "delivered") {
       return { error: "Cannot update a completed order" };
     }
-    return await order.update({ status });
+    const updated = await order.update({ status });
+
+    emitToUser(order.user_id, "order:status-updated", {
+      order: updated,
+      message: `Your order #${order.id} is now ${status}`,
+    });
+
+    return updated;
   },
 
   async cancel(id, userId, role) {
