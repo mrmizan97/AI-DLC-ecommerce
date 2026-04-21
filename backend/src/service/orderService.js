@@ -173,11 +173,13 @@ const orderService = {
   },
 
   async cancel(id, userId, role) {
+    if (role !== "admin") {
+      return { error: "Only admin can cancel orders" };
+    }
     const order = await Order.findByPk(id, {
       include: [{ model: OrderItem, as: "items" }],
     });
     if (!order) return null;
-    if (role === "customer" && order.user_id !== userId) return null;
     if (order.status !== "pending") {
       return { error: "Only pending orders can be cancelled" };
     }

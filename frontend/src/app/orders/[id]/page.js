@@ -41,17 +41,6 @@ export default function OrderDetailPage() {
     }
   };
 
-  const handleCancel = async () => {
-    if (!confirm("Are you sure you want to cancel this order?")) return;
-    try {
-      await api.patch(`/orders/${id}/cancel`);
-      toast.success("Order cancelled");
-      fetchOrder();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to cancel");
-    }
-  };
-
   if (!user) return null;
   if (loading) return <div className="max-w-4xl mx-auto p-8"><div className="bg-white h-64 rounded-lg animate-pulse" /></div>;
   if (!order) return <div className="max-w-4xl mx-auto p-8 text-center text-gray-500">Order not found</div>;
@@ -128,14 +117,6 @@ export default function OrderDetailPage() {
           </span>
         </div>
 
-        {order.status === "pending" && (
-          <button
-            onClick={handleCancel}
-            className="mt-4 w-full bg-red-600 text-white font-semibold py-2 rounded hover:bg-red-700"
-          >
-            Cancel Order
-          </button>
-        )}
       </div>
     </div>
   );

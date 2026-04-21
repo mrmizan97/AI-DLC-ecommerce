@@ -7,15 +7,18 @@ import { Search, ShoppingCart, User, LogOut, Package, Menu, LayoutDashboard } fr
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
 import NotificationBell from "@/components/NotificationBell";
+import { getProfilePhoto } from "@/lib/media";
+import api from "@/lib/api";
 
 export default function Header() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user, logout, updateUser } = useAuthStore();
   const cartCount = useCartStore((state) => state.totalItems());
   const [search, setSearch] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
+  const fetchedProfileFor = useRef(null);
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -26,6 +29,16 @@ export default function Header() {
     document.addEventListener("click", handleClick);
     return () => document.removeEventListener("click", handleClick);
   }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    if (fetchedProfileFor.current === user.id) return;
+    fetchedProfileFor.current = user.id;
+    api
+      .get("/auth/profile")
+      .then((r) => updateUser(r.data.data))
+      .catch(() => {});
+  }, [user?.id, updateUser]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -81,9 +94,17 @@ export default function Header() {
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-1 hover:opacity-80"
+                  className="flex items-center gap-2 hover:opacity-80"
                 >
-                  <User size={22} />
+                  {getProfilePhoto(user) ? (
+                    <img
+                      src={getProfilePhoto(user)}
+                      alt={user.name}
+                      className="w-7 h-7 rounded-full object-cover border border-white/50"
+                    />
+                  ) : (
+                    <User size={22} />
+                  )}
                   <span className="hidden lg:inline">{user.name}</span>
                 </button>
                 {userMenuOpen && (

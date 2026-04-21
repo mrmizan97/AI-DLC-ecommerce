@@ -53,7 +53,8 @@ const orderController = {
         return res.status(404).json({ success: false, message: "Order not found" });
       }
       if (result.error) {
-        return res.status(400).json({ success: false, message: result.error });
+        const status = result.error === "Only admin can cancel orders" ? 403 : 400;
+        return res.status(status).json({ success: false, message: result.error });
       }
       res.json({ success: true, message: "Order cancelled successfully", data: result });
     } catch (error) {

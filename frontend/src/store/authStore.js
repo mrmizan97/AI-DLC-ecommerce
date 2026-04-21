@@ -15,6 +15,13 @@ export const useAuthStore = create(
         set({ user, token });
       },
 
+      updateUser: (user) => {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(user));
+        }
+        set({ user });
+      },
+
       logout: () => {
         if (typeof window !== "undefined") {
           localStorage.removeItem("token");
