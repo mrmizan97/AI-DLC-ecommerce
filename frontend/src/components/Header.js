@@ -95,20 +95,22 @@ export default function Header() {
                     >
                       <User size={16} /> Profile
                     </Link>
-                    <Link
-                      href="/orders"
-                      onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
-                    >
-                      <Package size={16} /> My Orders
-                    </Link>
+                    {user.role !== "admin" && (
+                      <Link
+                        href="/orders"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
+                      >
+                        <Package size={16} /> My Orders
+                      </Link>
+                    )}
                     {user.role === "admin" && (
                       <Link
-                        href="/admin"
+                        href="/admin/orders"
                         onClick={() => setUserMenuOpen(false)}
                         className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-primary font-medium"
                       >
-                        <LayoutDashboard size={16} /> Admin Dashboard
+                        <LayoutDashboard size={16} /> Admin Panel
                       </Link>
                     )}
                     <button
@@ -146,9 +148,11 @@ export default function Header() {
             {user ? (
               <>
                 <Link href="/profile" className="py-2">Profile</Link>
-                <Link href="/orders" className="py-2">My Orders</Link>
+                {user.role !== "admin" && (
+                  <Link href="/orders" className="py-2">My Orders</Link>
+                )}
                 {user.role === "admin" && (
-                  <Link href="/admin" className="py-2 font-medium">Admin Dashboard</Link>
+                  <Link href="/admin/orders" className="py-2 font-medium">Admin Panel</Link>
                 )}
                 <button onClick={handleLogout} className="text-left py-2">Logout</button>
               </>

@@ -61,9 +61,9 @@ export default function OrderDetailPage() {
       <div className="bg-white rounded-lg p-6">
         <div className="flex justify-between items-start mb-6 pb-6 border-b">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Order #{order.id}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Order #{order.order_number || order.id}</h1>
             <p className="text-sm text-gray-500 mt-1">
-              Placed on {new Date(order.created_at).toLocaleString()}
+              Placed on {new Date(order.createdAt).toLocaleString()}
             </p>
           </div>
           <span className={`px-3 py-1 rounded-full text-sm font-medium ${STATUS_COLORS[order.status]}`}>

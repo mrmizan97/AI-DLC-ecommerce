@@ -125,7 +125,7 @@ export default function AdminUsersPage() {
                       {u.is_active ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="p-3 text-gray-500">{new Date(u.created_at).toLocaleDateString()}</td>
+                  <td className="p-3 text-gray-500 whitespace-nowrap">{new Date(u.createdAt).toLocaleString()}</td>
                   <td className="p-3">
                     <div className="flex gap-1">
                       <button onClick={() => openEdit(u)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Edit size={16} /></button>

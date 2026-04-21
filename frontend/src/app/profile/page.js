@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, Mail, Phone, Shield } from "lucide-react";
 import api from "@/lib/api";
@@ -11,17 +11,21 @@ export default function ProfilePage() {
   const user = useAuthStore((s) => s.user);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const fetched = useRef(false);
 
   useEffect(() => {
     if (!user) {
       router.push("/login");
       return;
     }
+    if (fetched.current) return;
+    fetched.current = true;
     api
       .get("/auth/profile")
       .then((r) => setProfile(r.data.data))
       .finally(() => setLoading(false));
-  }, [user, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   if (!user) return null;
   if (loading) return <div className="max-w-3xl mx-auto p-8"><div className="bg-white h-64 rounded animate-pulse" /></div>;

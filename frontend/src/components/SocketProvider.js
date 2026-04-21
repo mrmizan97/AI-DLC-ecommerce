@@ -8,36 +8,26 @@ import { connectSocket, disconnectSocket } from "@/lib/socket";
 
 export default function SocketProvider({ children }) {
   const { user, token } = useAuthStore();
-  const addNotification = useNotificationStore((s) => s.add);
+  const fetchNotifications = useNotificationStore((s) => s.fetch);
+  const prepend = useNotificationStore((s) => s.prepend);
+  const reset = useNotificationStore((s) => s.reset);
 
   useEffect(() => {
     if (!user || !token) {
       disconnectSocket();
+      reset();
       return;
     }
 
+    fetchNotifications({ limit: 20 });
+
     const socket = connectSocket(token);
 
-    if (user.role === "admin") {
-      socket.on("order:created", (payload) => {
-        addNotification({
-          type: "order-created",
-          message: payload.message,
-          order_id: payload.order?.id,
-          data: payload.order,
-        });
-        toast.success(`🔔 ${payload.message}`, { duration: 5000 });
-      });
-    }
-
-    socket.on("order:status-updated", (payload) => {
-      addNotification({
-        type: "order-status",
-        message: payload.message,
-        order_id: payload.order?.id,
-        data: payload.order,
-      });
-      toast.success(`🔔 ${payload.message}`, { duration: 5000 });
+    socket.on("notification:new", (notification) => {
+      if (notification && notification.id) {
+        prepend(notification);
+      }
+      toast.success(`🔔 ${notification.message}`, { duration: 5000 });
     });
 
     socket.on("connect_error", (err) => {
@@ -45,11 +35,10 @@ export default function SocketProvider({ children }) {
     });
 
     return () => {
-      socket.off("order:created");
-      socket.off("order:status-updated");
+      socket.off("notification:new");
       socket.off("connect_error");
     };
-  }, [user, token, addNotification]);
+  }, [user, token, fetchNotifications, prepend, reset]);
 
   return children;
 }

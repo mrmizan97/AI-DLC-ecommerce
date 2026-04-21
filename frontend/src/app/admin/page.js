@@ -93,7 +93,7 @@ export default function AdminDashboardPage() {
   });
   const ordersByDay = last7Days.map((date) => ({
     date: new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    orders: orders.filter((o) => o.created_at?.startsWith(date)).length,
+    orders: orders.filter((o) => o.createdAt?.startsWith(date)).length,
   }));
 
   // Top 5 products by stock
@@ -125,7 +125,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+      <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -230,7 +230,7 @@ export default function AdminDashboardPage() {
               <tbody>
                 {orders.slice(0, 5).map((o) => (
                   <tr key={o.id} className="border-b">
-                    <td className="py-2 font-medium">#{o.id}</td>
+                    <td className="py-2 font-medium">#{o.order_number || o.id}</td>
                     <td className="py-2">{o.user?.name || "—"}</td>
                     <td className="py-2">${parseFloat(o.total_amount).toFixed(2)}</td>
                     <td className="py-2">
@@ -238,7 +238,7 @@ export default function AdminDashboardPage() {
                         {o.status}
                       </span>
                     </td>
-                    <td className="py-2 text-gray-500">{new Date(o.created_at).toLocaleDateString()}</td>
+                    <td className="py-2 text-gray-500">{new Date(o.createdAt).toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>

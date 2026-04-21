@@ -15,12 +15,12 @@ import {
 import { useAuthStore } from "@/store/authStore";
 
 const NAV_ITEMS = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/categories", label: "Categories", icon: Folder },
   { href: "/admin/tags", label: "Tags", icon: Tag },
-  { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin", label: "Reports", icon: LayoutDashboard },
 ];
 
 export default function AdminLayout({ children }) {

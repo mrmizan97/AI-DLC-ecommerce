@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Package } from "lucide-react";
@@ -20,17 +20,21 @@ export default function OrdersPage() {
   const user = useAuthStore((s) => s.user);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const fetched = useRef(false);
 
   useEffect(() => {
     if (!user) {
       router.push("/login");
       return;
     }
+    if (fetched.current) return;
+    fetched.current = true;
     api
       .get("/orders")
       .then((r) => setOrders(r.data.data || []))
       .finally(() => setLoading(false));
-  }, [user, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   if (!user) return null;
 
@@ -62,9 +66,9 @@ export default function OrdersPage() {
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="font-medium text-gray-900">Order #{order.id}</p>
+                  <p className="font-medium text-gray-900">Order #{order.order_number || order.id}</p>
                   <p className="text-sm text-gray-500 mt-1">
-                    {new Date(order.created_at).toLocaleDateString()} · {order.items?.length || 0} items
+                    {new Date(order.createdAt).toLocaleString()} · {order.items?.length || 0} items
                   </p>
                 </div>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[order.status]}`}>

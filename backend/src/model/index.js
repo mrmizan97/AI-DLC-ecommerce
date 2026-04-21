@@ -5,6 +5,7 @@ const Tag = require("./Tag");
 const User = require("./User");
 const Order = require("./Order");
 const OrderItem = require("./OrderItem");
+const Notification = require("./Notification");
 
 // Category <-> Product (One-to-Many)
 Category.hasMany(Product, { foreignKey: "category_id", as: "products" });
@@ -26,4 +27,12 @@ OrderItem.belongsTo(Order, { foreignKey: "order_id", as: "order" });
 Product.hasMany(OrderItem, { foreignKey: "product_id", as: "order_items" });
 OrderItem.belongsTo(Product, { foreignKey: "product_id", as: "product" });
 
-module.exports = { sequelize, Product, Category, Tag, User, Order, OrderItem };
+// User <-> Notification (One-to-Many)
+User.hasMany(Notification, { foreignKey: "user_id", as: "notifications" });
+Notification.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+// Order <-> Notification (One-to-Many)
+Order.hasMany(Notification, { foreignKey: "order_id", as: "notifications" });
+Notification.belongsTo(Order, { foreignKey: "order_id", as: "order" });
+
+module.exports = { sequelize, Product, Category, Tag, User, Order, OrderItem, Notification };

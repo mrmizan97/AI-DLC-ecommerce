@@ -22,9 +22,12 @@ const productService = {
       status,
       brand,
       tag,
+      tag_id,
       search,
       min_price,
       max_price,
+      start_date,
+      end_date,
       sort_by = "created_at",
       sort_order = "DESC",
     } = query;
@@ -49,8 +52,16 @@ const productService = {
       if (max_price) where.price[Op.lte] = max_price;
     }
 
+    if (start_date || end_date) {
+      where.created_at = {};
+      if (start_date) where.created_at[Op.gte] = new Date(start_date);
+      if (end_date) where.created_at[Op.lte] = new Date(end_date);
+    }
+
     const safeSortBy = ALLOWED_SORT_BY.includes(sort_by) ? sort_by : "created_at";
     const safeSortOrder = ALLOWED_SORT_ORDER.includes(sort_order.toUpperCase()) ? sort_order.toUpperCase() : "DESC";
+
+    const tagFilter = tag_id ? { id: tag_id } : tag ? { name: tag } : null;
 
     const includes = [
       { model: Category, as: "category", attributes: ["id", "name"] },
@@ -59,7 +70,7 @@ const productService = {
         as: "tags",
         attributes: ["id", "name"],
         through: { attributes: [] },
-        ...(tag ? { where: { name: tag } } : {}),
+        ...(tagFilter ? { where: tagFilter, required: true } : {}),
       },
     ];
 

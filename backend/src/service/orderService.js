@@ -1,6 +1,7 @@
 const { Op } = require("sequelize");
 const { sequelize, Order, OrderItem, Product, User } = require("../model");
 const { emitToAdmins, emitToUser } = require("../socket");
+const notificationService = require("./notificationService");
 
 const orderIncludes = [
   { model: User, as: "user", attributes: ["id", "name", "email"] },
@@ -10,6 +11,15 @@ const orderIncludes = [
     include: [{ model: Product, as: "product", attributes: ["id", "name", "image_url"] }],
   },
 ];
+
+async function generateUniqueOrderNumber(transaction) {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const num = String(Math.floor(100000 + Math.random() * 900000));
+    const existing = await Order.findOne({ where: { order_number: num }, transaction });
+    if (!existing) return num;
+  }
+  throw new Error("Could not generate unique order number after 10 attempts");
+}
 
 const orderService = {
   async create(userId, data) {
@@ -37,8 +47,10 @@ const orderService = {
         });
       }
 
+      const order_number = await generateUniqueOrderNumber(transaction);
+
       const order = await Order.create(
-        { user_id: userId, status: "pending", total_amount: totalAmount, shipping_address, phone, note },
+        { order_number, user_id: userId, status: "pending", total_amount: totalAmount, shipping_address, phone, note },
         { transaction }
       );
 
@@ -53,9 +65,12 @@ const orderService = {
       await transaction.commit();
       const fullOrder = await Order.findByPk(order.id, { include: orderIncludes });
 
-      emitToAdmins("order:created", {
-        order: fullOrder,
-        message: `New order #${fullOrder.id} from ${fullOrder.user?.name}`,
+      const message = `New order #${fullOrder.order_number} from ${fullOrder.user?.name}`;
+      emitToAdmins("order:created", { order: fullOrder, message });
+      await notificationService.createForAllAdmins({
+        type: "order-created",
+        message,
+        order_id: fullOrder.id,
       });
 
       return fullOrder;
@@ -66,12 +81,24 @@ const orderService = {
   },
 
   async findAll(query = {}, userId, role) {
-    const { page = 1, limit = 10, status } = query;
+    const { page = 1, limit = 10, status, search, phone, start_date, end_date } = query;
     const offset = (page - 1) * limit;
     const where = {};
 
     if (role === "customer") where.user_id = userId;
     if (status) where.status = status;
+    if (search) where.order_number = { [Op.like]: `%${search}%` };
+    if (phone) where.phone = { [Op.like]: `%${phone}%` };
+
+    if (start_date || end_date) {
+      where.created_at = {};
+      if (start_date) where.created_at[Op.gte] = new Date(start_date);
+      if (end_date) {
+        const end = new Date(end_date);
+        end.setHours(23, 59, 59, 999);
+        where.created_at[Op.lte] = end;
+      }
+    }
 
     const { count, rows } = await Order.findAndCountAll({
       where,
@@ -108,9 +135,12 @@ const orderService = {
     }
     const updated = await order.update({ status });
 
-    emitToUser(order.user_id, "order:status-updated", {
-      order: updated,
-      message: `Your order #${order.id} is now ${status}`,
+    const message = `Your order #${order.order_number || order.id} is now ${status}`;
+    emitToUser(order.user_id, "order:status-updated", { order: updated, message });
+    await notificationService.createForUser(order.user_id, {
+      type: "order-status",
+      message,
+      order_id: order.id,
     });
 
     return updated;
