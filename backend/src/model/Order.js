@@ -23,6 +23,21 @@ const Order = sequelize.define(
       allowNull: false,
       defaultValue: "pending",
     },
+    payment_method: {
+      type: DataTypes.ENUM("online", "cash"),
+      allowNull: false,
+      defaultValue: "cash",
+    },
+    payment_status: {
+      type: DataTypes.ENUM("pending", "paid", "failed", "cancelled", "refunded"),
+      allowNull: false,
+      defaultValue: "pending",
+    },
+    tran_id: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      unique: true,
+    },
     total_amount: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,

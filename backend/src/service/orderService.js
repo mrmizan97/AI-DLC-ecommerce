@@ -2,6 +2,7 @@ const { Op } = require("sequelize");
 const { sequelize, Order, OrderItem, Product, User } = require("../model");
 const { emitToAdmins, emitToUser } = require("../socket");
 const notificationService = require("./notificationService");
+const paymentService = require("./paymentService");
 
 const orderIncludes = [
   { model: User, as: "user", attributes: ["id", "name", "email"] },
@@ -23,7 +24,8 @@ async function generateUniqueOrderNumber(transaction) {
 
 const orderService = {
   async create(userId, data) {
-    const { shipping_address, phone, note, items } = data;
+    const { shipping_address, phone, note, items, payment_method = "cash" } = data;
+    const method = payment_method === "online" ? "online" : "cash";
     const transaction = await sequelize.transaction();
 
     try {
@@ -50,7 +52,17 @@ const orderService = {
       const order_number = await generateUniqueOrderNumber(transaction);
 
       const order = await Order.create(
-        { order_number, user_id: userId, status: "pending", total_amount: totalAmount, shipping_address, phone, note },
+        {
+          order_number,
+          user_id: userId,
+          status: "pending",
+          total_amount: totalAmount,
+          shipping_address,
+          phone,
+          note,
+          payment_method: method,
+          payment_status: "pending",
+        },
         { transaction }
       );
 
@@ -73,7 +85,20 @@ const orderService = {
         order_id: fullOrder.id,
       });
 
-      return fullOrder;
+      // Initiate SSLCommerz only for online payments
+      let gateway_url = null;
+      if (method === "online") {
+        try {
+          const payment = await paymentService.initiate(fullOrder, fullOrder.user);
+          gateway_url = payment.gateway_url;
+        } catch (err) {
+          console.error("Payment init failed:", err.message);
+        }
+      }
+
+      const result = fullOrder.toJSON();
+      result.gateway_url = gateway_url;
+      return result;
     } catch (error) {
       await transaction.rollback();
       throw error;
@@ -81,12 +106,13 @@ const orderService = {
   },
 
   async findAll(query = {}, userId, role) {
-    const { page = 1, limit = 10, status, search, phone, start_date, end_date } = query;
+    const { page = 1, limit = 10, status, search, phone, payment_method, start_date, end_date } = query;
     const offset = (page - 1) * limit;
     const where = {};
 
     if (role === "customer") where.user_id = userId;
     if (status) where.status = status;
+    if (payment_method) where.payment_method = payment_method;
     if (search) where.order_number = { [Op.like]: `%${search}%` };
     if (phone) where.phone = { [Op.like]: `%${phone}%` };
 

@@ -66,9 +66,21 @@ export default function OrderDetailPage() {
               Placed on {new Date(order.createdAt).toLocaleString()}
             </p>
           </div>
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${STATUS_COLORS[order.status]}`}>
-            {order.status}
-          </span>
+          <div className="flex flex-col items-end gap-2">
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${STATUS_COLORS[order.status]}`}>
+              {order.status}
+            </span>
+            {order.payment_status && (
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                order.payment_status === "paid" ? "bg-green-100 text-green-800"
+                : order.payment_status === "failed" ? "bg-red-100 text-red-800"
+                : order.payment_status === "cancelled" ? "bg-gray-100 text-gray-700"
+                : "bg-yellow-100 text-yellow-800"
+              }`}>
+                Payment: {order.payment_status}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="mb-6">

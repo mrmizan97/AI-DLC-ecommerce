@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { CreditCard, Truck } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { useCartStore } from "@/store/cartStore";
@@ -12,7 +13,7 @@ export default function CheckoutPage() {
   const { items, totalAmount, clear } = useCartStore();
   const user = useAuthStore((s) => s.user);
 
-  const [form, setForm] = useState({ shipping_address: "", phone: "", note: "" });
+  const [form, setForm] = useState({ shipping_address: "", phone: "", note: "", payment_method: "cash" });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -35,9 +36,16 @@ export default function CheckoutPage() {
         items: items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })),
       };
       const res = await api.post("/orders", payload);
-      toast.success("Order placed successfully!");
+      const orderData = res.data.data;
       clear();
-      router.push(`/orders/${res.data.data.id}`);
+
+      if (orderData.gateway_url) {
+        toast.success("Redirecting to payment gateway…");
+        window.location.href = orderData.gateway_url;
+      } else {
+        toast.success("Order placed successfully!");
+        router.push(`/orders/${orderData.id}`);
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to place order");
     } finally {
@@ -89,12 +97,61 @@ export default function CheckoutPage() {
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method *</label>
+            <div className="grid grid-cols-2 gap-3">
+              <label
+                className={`cursor-pointer border-2 rounded-lg p-4 flex items-start gap-3 transition ${
+                  form.payment_method === "cash" ? "border-primary bg-orange-50" : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="payment_method"
+                  value="cash"
+                  checked={form.payment_method === "cash"}
+                  onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <Truck size={18} />
+                    <span className="font-medium">Cash on Delivery</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Pay when you receive your order</p>
+                </div>
+              </label>
+
+              <label
+                className={`cursor-pointer border-2 rounded-lg p-4 flex items-start gap-3 transition ${
+                  form.payment_method === "online" ? "border-primary bg-orange-50" : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="payment_method"
+                  value="online"
+                  checked={form.payment_method === "online"}
+                  onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <CreditCard size={18} />
+                    <span className="font-medium">Online Payment</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Card, Mobile banking, bKash, Nagad</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-primary text-white font-semibold py-3 rounded hover:bg-primary-dark disabled:opacity-50"
           >
-            {loading ? "Placing order..." : "Place Order"}
+            {loading ? "Processing…" : form.payment_method === "online" ? "Proceed to Payment" : "Place Order"}
           </button>
         </form>
 

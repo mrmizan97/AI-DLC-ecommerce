@@ -19,6 +19,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [search, setSearch] = useState("");
   const [phone, setPhone] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -26,13 +27,14 @@ export default function AdminOrdersPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [viewing, setViewing] = useState(null);
 
-  const activeFilterCount = [filter, search, phone, startDate, endDate].filter(Boolean).length;
+  const activeFilterCount = [filter, paymentMethod, search, phone, startDate, endDate].filter(Boolean).length;
 
   const fetchAll = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (filter) params.append("status", filter);
+      if (paymentMethod) params.append("payment_method", paymentMethod);
       if (search.trim()) params.append("search", search.trim());
       if (phone.trim()) params.append("phone", phone.trim());
       if (startDate) params.append("start_date", startDate);
@@ -45,13 +47,14 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const lastFilter = useRef(null);
+  const lastKey = useRef(null);
   useEffect(() => {
-    if (lastFilter.current === filter) return;
-    lastFilter.current = filter;
+    const key = `${filter}|${paymentMethod}`;
+    if (lastKey.current === key) return;
+    lastKey.current = key;
     fetchAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
+  }, [filter, paymentMethod]);
 
   const handleStatusChange = async (id, status) => {
     try {
@@ -77,6 +80,8 @@ export default function AdminOrdersPage() {
         { label: "Phone", value: "phone" },
         { label: "Items", value: (r) => r.items?.length || 0 },
         { label: "Total", value: (r) => parseFloat(r.total_amount).toFixed(2) },
+        { label: "Payment Method", value: (r) => r.payment_method === "online" ? "Online" : "Cash on Delivery" },
+        { label: "Payment Status", value: "payment_status" },
         { label: "Status", value: "status" },
         { label: "Shipping Address", value: "shipping_address" },
         { label: "Date", value: (r) => new Date(r.createdAt).toLocaleString() },
@@ -92,6 +97,7 @@ export default function AdminOrdersPage() {
     setStartDate("");
     setEndDate("");
     setFilter("");
+    setPaymentMethod("");
   };
 
   return (
@@ -120,6 +126,11 @@ export default function AdminOrdersPage() {
           <select value={filter} onChange={(e) => setFilter(e.target.value)} className="border rounded px-3 py-2 text-sm">
             <option value="">All Statuses</option>
             {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="border rounded px-3 py-2 text-sm">
+            <option value="">All Methods</option>
+            <option value="cash">Cash on Delivery</option>
+            <option value="online">Online</option>
           </select>
         </div>
       </div>
@@ -167,6 +178,7 @@ export default function AdminOrdersPage() {
                 <th className="p-3">Phone</th>
                 <th className="p-3">Items</th>
                 <th className="p-3">Total</th>
+                <th className="p-3">Payment</th>
                 <th className="p-3">Status</th>
                 <th className="p-3">Date</th>
                 <th className="p-3">Actions</th>
@@ -174,9 +186,9 @@ export default function AdminOrdersPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="p-6 text-center text-gray-400">Loading…</td></tr>
+                <tr><td colSpan={9} className="p-6 text-center text-gray-400">Loading…</td></tr>
               ) : orders.length === 0 ? (
-                <tr><td colSpan={8} className="p-6 text-center text-gray-400">No orders.</td></tr>
+                <tr><td colSpan={9} className="p-6 text-center text-gray-400">No orders.</td></tr>
               ) : orders.map((o) => (
                 <tr key={o.id} className="border-t">
                   <td className="p-3 font-medium">#{o.order_number || o.id}</td>
@@ -184,6 +196,21 @@ export default function AdminOrdersPage() {
                   <td className="p-3 text-gray-700 whitespace-nowrap">{o.phone}</td>
                   <td className="p-3">{o.items?.length || 0}</td>
                   <td className="p-3 font-medium">${parseFloat(o.total_amount).toFixed(2)}</td>
+                  <td className="p-3">
+                    <div className="flex flex-col gap-1">
+                      <span className={`px-2 py-0.5 rounded-full text-xs text-center ${o.payment_method === "online" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"}`}>
+                        {o.payment_method === "online" ? "Online" : "COD"}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs text-center ${
+                        o.payment_status === "paid" ? "bg-green-100 text-green-700"
+                        : o.payment_status === "failed" ? "bg-red-100 text-red-700"
+                        : o.payment_status === "cancelled" ? "bg-gray-100 text-gray-600"
+                        : "bg-yellow-100 text-yellow-700"
+                      }`}>
+                        {o.payment_status}
+                      </span>
+                    </div>
+                  </td>
                   <td className="p-3">
                     <select
                       value={o.status}
