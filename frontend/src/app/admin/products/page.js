@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Plus, Edit, Trash2, X, Download, Filter } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
@@ -66,11 +66,18 @@ export default function AdminProductsPage() {
     } catch {}
   };
 
+  const staticFetched = useRef(false);
   useEffect(() => {
+    if (staticFetched.current) return;
+    staticFetched.current = true;
     fetchStaticData();
   }, []);
 
+  const lastFilterKey = useRef(null);
   useEffect(() => {
+    const key = `${filters.category_id}|${filters.status}|${filters.tag_id}`;
+    if (lastFilterKey.current === key) return;
+    lastFilterKey.current = key;
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.category_id, filters.status, filters.tag_id]);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Edit, Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
@@ -29,7 +29,13 @@ export default function AdminUsersPage() {
     }
   };
 
-  useEffect(() => { fetchAll(); }, [roleFilter]);
+  const lastRole = useRef(null);
+  useEffect(() => {
+    if (lastRole.current === roleFilter) return;
+    lastRole.current = roleFilter;
+    fetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roleFilter]);
 
   const openEdit = (u) => {
     setEditing(u);

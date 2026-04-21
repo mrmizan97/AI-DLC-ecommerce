@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Eye, X, Download, Filter } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
@@ -45,7 +45,13 @@ export default function AdminOrdersPage() {
     }
   };
 
-  useEffect(() => { fetchAll(); }, [filter]);
+  const lastFilter = useRef(null);
+  useEffect(() => {
+    if (lastFilter.current === filter) return;
+    lastFilter.current = filter;
+    fetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter]);
 
   const handleStatusChange = async (id, status) => {
     try {

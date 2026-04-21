@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Plus, Edit, Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
@@ -22,7 +22,12 @@ export default function AdminCategoriesPage() {
     }
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  const fetched = useRef(false);
+  useEffect(() => {
+    if (fetched.current) return;
+    fetched.current = true;
+    fetchAll();
+  }, []);
 
   const openCreate = () => {
     setEditing(null);

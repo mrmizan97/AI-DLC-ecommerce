@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -35,82 +35,20 @@ const STATUS_COLORS = {
 };
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState({
-    products: 0,
-    categories: 0,
-    tags: 0,
-    orders: 0,
-    users: 0,
-    revenue: 0,
-  });
-  const [orders, setOrders] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const fetched = useRef(false);
 
   useEffect(() => {
-    Promise.all([
-      api.get("/products?limit=100"),
-      api.get("/categories"),
-      api.get("/tags"),
-      api.get("/orders?limit=100"),
-      api.get("/users?limit=100"),
-    ])
-      .then(([prodRes, catRes, tagRes, orderRes, userRes]) => {
-        const allOrders = orderRes.data.data || [];
-        const revenue = allOrders
-          .filter((o) => o.status !== "cancelled")
-          .reduce((sum, o) => sum + parseFloat(o.total_amount), 0);
-
-        setStats({
-          products: prodRes.data.pagination?.total || prodRes.data.data.length,
-          categories: catRes.data.data.length,
-          tags: tagRes.data.data.length,
-          orders: orderRes.data.pagination?.total || allOrders.length,
-          users: userRes.data.pagination?.total || userRes.data.data.length,
-          revenue,
-        });
-        setOrders(allOrders);
-        setProducts(prodRes.data.data || []);
-        setUsers(userRes.data.data || []);
-      })
+    if (fetched.current) return;
+    fetched.current = true;
+    api
+      .get("/stats/dashboard")
+      .then((r) => setStats(r.data.data))
       .finally(() => setLoading(false));
   }, []);
 
-  // Order status distribution
-  const statusData = orders.reduce((acc, o) => {
-    const existing = acc.find((a) => a.name === o.status);
-    if (existing) existing.value++;
-    else acc.push({ name: o.status, value: 1 });
-    return acc;
-  }, []);
-
-  // Orders per day (last 7 days)
-  const last7Days = [...Array(7)].map((_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    return d.toISOString().split("T")[0];
-  });
-  const ordersByDay = last7Days.map((date) => ({
-    date: new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    orders: orders.filter((o) => o.createdAt?.startsWith(date)).length,
-  }));
-
-  // Top 5 products by stock
-  const topStock = [...products]
-    .sort((a, b) => b.stock - a.stock)
-    .slice(0, 5)
-    .map((p) => ({ name: p.name.slice(0, 15), stock: p.stock }));
-
-  // User role distribution
-  const roleData = users.reduce((acc, u) => {
-    const existing = acc.find((a) => a.name === u.role);
-    if (existing) existing.value++;
-    else acc.push({ name: u.role, value: 1 });
-    return acc;
-  }, []);
-
-  if (loading) {
+  if (loading || !stats) {
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -123,26 +61,35 @@ export default function AdminDashboardPage() {
     );
   }
 
+  const { totals, ordersByDay, statusDistribution, topProducts, usersByRole, recentOrders } = stats;
+
+  const ordersByDayChart = ordersByDay.map((r) => ({
+    date: new Date(r.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    orders: r.count,
+  }));
+
+  const statusData = statusDistribution.map((s) => ({ name: s.status, value: s.count }));
+  const roleData = usersByRole.map((r) => ({ name: r.role, value: r.count }));
+  const topStockData = topProducts.map((p) => ({ name: p.name.slice(0, 15), stock: p.stock }));
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
 
-      {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <StatCard icon={<DollarSign size={20} />} label="Revenue" value={`$${stats.revenue.toFixed(2)}`} color="bg-green-500" />
-        <StatCard icon={<ShoppingBag size={20} />} label="Orders" value={stats.orders} color="bg-blue-500" />
-        <StatCard icon={<Users size={20} />} label="Users" value={stats.users} color="bg-purple-500" />
-        <StatCard icon={<Package size={20} />} label="Products" value={stats.products} color="bg-primary" />
-        <StatCard icon={<Folder size={20} />} label="Categories" value={stats.categories} color="bg-pink-500" />
-        <StatCard icon={<Tag size={20} />} label="Tags" value={stats.tags} color="bg-teal-500" />
+        <StatCard icon={<DollarSign size={20} />} label="Revenue" value={`$${totals.revenue.toFixed(2)}`} color="bg-green-500" />
+        <StatCard icon={<ShoppingBag size={20} />} label="Orders" value={totals.orders} color="bg-blue-500" />
+        <StatCard icon={<Users size={20} />} label="Users" value={totals.users} color="bg-purple-500" />
+        <StatCard icon={<Package size={20} />} label="Products" value={totals.products} color="bg-primary" />
+        <StatCard icon={<Folder size={20} />} label="Categories" value={totals.categories} color="bg-pink-500" />
+        <StatCard icon={<Tag size={20} />} label="Tags" value={totals.tags} color="bg-teal-500" />
       </div>
 
-      {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg p-4">
           <h2 className="font-bold text-gray-900 mb-4">Orders — Last 7 Days</h2>
           <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={ordersByDay}>
+            <LineChart data={ordersByDayChart}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis dataKey="date" fontSize={12} />
               <YAxis fontSize={12} allowDecimals={false} />
@@ -172,13 +119,12 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Charts Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg p-4">
           <h2 className="font-bold text-gray-900 mb-4">Top 5 Products by Stock</h2>
-          {topStock.length > 0 ? (
+          {topStockData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={topStock}>
+              <BarChart data={topStockData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="name" fontSize={11} />
                 <YAxis fontSize={12} allowDecimals={false} />
@@ -210,17 +156,16 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Recent Orders */}
       <div className="bg-white rounded-lg p-4">
         <h2 className="font-bold text-gray-900 mb-4">Recent Orders</h2>
-        {orders.slice(0, 5).length === 0 ? (
+        {recentOrders.length === 0 ? (
           <p className="text-gray-400">No orders yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-gray-500 border-b">
                 <tr>
-                  <th className="py-2">Order ID</th>
+                  <th className="py-2">Order #</th>
                   <th className="py-2">Customer</th>
                   <th className="py-2">Total</th>
                   <th className="py-2">Status</th>
@@ -228,7 +173,7 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {orders.slice(0, 5).map((o) => (
+                {recentOrders.map((o) => (
                   <tr key={o.id} className="border-b">
                     <td className="py-2 font-medium">#{o.order_number || o.id}</td>
                     <td className="py-2">{o.user?.name || "—"}</td>
