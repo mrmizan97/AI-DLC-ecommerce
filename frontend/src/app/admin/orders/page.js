@@ -5,6 +5,7 @@ import { Eye, X, Download, Filter } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { exportToCsv } from "@/lib/exportCsv";
+import Pagination from "@/components/Pagination";
 
 const STATUS_OPTIONS = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
 const STATUS_COLORS = {
@@ -26,6 +27,9 @@ export default function AdminOrdersPage() {
   const [endDate, setEndDate] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [viewing, setViewing] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 });
 
   const activeFilterCount = [filter, paymentMethod, search, phone, startDate, endDate].filter(Boolean).length;
 
@@ -39,9 +43,11 @@ export default function AdminOrdersPage() {
       if (phone.trim()) params.append("phone", phone.trim());
       if (startDate) params.append("start_date", startDate);
       if (endDate) params.append("end_date", endDate);
-      params.append("limit", "100");
+      params.append("page", page);
+      params.append("limit", limit);
       const r = await api.get(`/orders?${params.toString()}`);
       setOrders(r.data.data || []);
+      setPagination(r.data.pagination || { total: 0, page: 1, totalPages: 1 });
     } finally {
       setLoading(false);
     }
@@ -49,12 +55,12 @@ export default function AdminOrdersPage() {
 
   const lastKey = useRef(null);
   useEffect(() => {
-    const key = `${filter}|${paymentMethod}`;
+    const key = `${filter}|${paymentMethod}|${page}|${limit}`;
     if (lastKey.current === key) return;
     lastKey.current = key;
     fetchAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, paymentMethod]);
+  }, [filter, paymentMethod, page, limit]);
 
   const handleStatusChange = async (id, status) => {
     try {
@@ -231,6 +237,15 @@ export default function AdminOrdersPage() {
           </table>
         </div>
       </div>
+
+      <Pagination
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        limit={limit}
+        onPageChange={setPage}
+        onLimitChange={(n) => { setLimit(n); setPage(1); }}
+      />
 
       {viewing && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

@@ -5,6 +5,7 @@ import { Edit, Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import Pagination from "@/components/Pagination";
 
 export default function AdminUsersPage() {
   const currentUser = useAuthStore((s) => s.user);
@@ -14,6 +15,9 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: "", phone: "", role: "customer", is_active: true });
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 });
 
   const fetchAll = async () => {
     setLoading(true);
@@ -21,21 +25,24 @@ export default function AdminUsersPage() {
       const params = new URLSearchParams();
       if (roleFilter) params.append("role", roleFilter);
       if (search) params.append("search", search);
-      params.append("limit", "100");
+      params.append("page", page);
+      params.append("limit", limit);
       const r = await api.get(`/users?${params.toString()}`);
       setUsers(r.data.data || []);
+      setPagination(r.data.pagination || { total: 0, page: 1, totalPages: 1 });
     } finally {
       setLoading(false);
     }
   };
 
-  const lastRole = useRef(null);
+  const lastKey = useRef(null);
   useEffect(() => {
-    if (lastRole.current === roleFilter) return;
-    lastRole.current = roleFilter;
+    const key = `${roleFilter}|${page}|${limit}`;
+    if (lastKey.current === key) return;
+    lastKey.current = key;
     fetchAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roleFilter]);
+  }, [roleFilter, page, limit]);
 
   const openEdit = (u) => {
     setEditing(u);
@@ -144,6 +151,15 @@ export default function AdminUsersPage() {
           </table>
         </div>
       </div>
+
+      <Pagination
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        limit={limit}
+        onPageChange={setPage}
+        onLimitChange={(n) => { setLimit(n); setPage(1); }}
+      />
 
       {editing && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

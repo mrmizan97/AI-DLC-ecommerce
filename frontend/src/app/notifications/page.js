@@ -6,6 +6,7 @@ import { Bell, Check, CheckCheck, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/authStore";
 import { useNotificationStore } from "@/store/notificationStore";
+import Pagination from "@/components/Pagination";
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -21,15 +22,16 @@ export default function NotificationsPage() {
 
   const [filter, setFilter] = useState("all"); // all | unread
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
   useEffect(() => {
     if (!user) {
       router.push("/login");
       return;
     }
-    fetch({ page, limit: 20, ...(filter === "unread" ? { unread_only: "true" } : {}) });
+    fetch({ page, limit, ...(filter === "unread" ? { unread_only: "true" } : {}) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, filter, page]);
+  }, [user?.id, filter, page, limit]);
 
   if (!user) return null;
 
@@ -123,27 +125,14 @@ export default function NotificationsPage() {
         )}
       </div>
 
-      {pagination.totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-6">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-            className="px-4 py-2 bg-white rounded disabled:opacity-50"
-          >
-            Prev
-          </button>
-          <span className="px-4 py-2">
-            Page {pagination.page} of {pagination.totalPages}
-          </span>
-          <button
-            disabled={page === pagination.totalPages}
-            onClick={() => setPage(page + 1)}
-            className="px-4 py-2 bg-white rounded disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      )}
+      <Pagination
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        limit={limit}
+        onPageChange={setPage}
+        onLimitChange={(n) => { setLimit(n); setPage(1); }}
+      />
     </div>
   );
 }

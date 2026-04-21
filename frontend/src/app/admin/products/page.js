@@ -5,6 +5,7 @@ import { Plus, Edit, Trash2, X, Download, Filter } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { exportToCsv } from "@/lib/exportCsv";
+import Pagination from "@/components/Pagination";
 
 const EMPTY_FORM = {
   name: "",
@@ -37,6 +38,9 @@ export default function AdminProductsPage() {
     start_date: "",
     end_date: "",
   });
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 });
 
   const activeFilterCount = Object.values(filters).filter((v) => v !== "").length;
 
@@ -50,9 +54,11 @@ export default function AdminProductsPage() {
       if (filters.tag_id) params.append("tag_id", filters.tag_id);
       if (filters.start_date) params.append("start_date", filters.start_date);
       if (filters.end_date) params.append("end_date", filters.end_date);
-      params.append("limit", "100");
+      params.append("page", page);
+      params.append("limit", limit);
       const r = await api.get(`/products?${params.toString()}`);
       setProducts(r.data.data || []);
+      setPagination(r.data.pagination || { total: 0, page: 1, totalPages: 1 });
     } finally {
       setLoading(false);
     }
@@ -75,12 +81,12 @@ export default function AdminProductsPage() {
 
   const lastFilterKey = useRef(null);
   useEffect(() => {
-    const key = `${filters.category_id}|${filters.status}|${filters.tag_id}`;
+    const key = `${filters.category_id}|${filters.status}|${filters.tag_id}|${page}|${limit}`;
     if (lastFilterKey.current === key) return;
     lastFilterKey.current = key;
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.category_id, filters.status, filters.tag_id]);
+  }, [filters.category_id, filters.status, filters.tag_id, page, limit]);
 
   const fetchAll = () => {
     fetchProducts();
@@ -344,6 +350,15 @@ export default function AdminProductsPage() {
           </table>
         </div>
       </div>
+
+      <Pagination
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        limit={limit}
+        onPageChange={setPage}
+        onLimitChange={(n) => { setLimit(n); setPage(1); }}
+      />
 
       {showModal && (
         <Modal onClose={() => setShowModal(false)} title={editing ? "Edit Product" : "New Product"}>
