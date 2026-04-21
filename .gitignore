@@ -41,6 +41,10 @@ coverage/
 # Test temp files
 backend/tests/shared-data.json
 
+# Uploaded media
+backend/uploads/
+!backend/uploads/.gitkeep
+
 # ─── Next.js (frontend) ─────────────────────────────────────────────────────
 frontend/.next/
 frontend/out/
