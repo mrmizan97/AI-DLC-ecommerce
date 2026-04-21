@@ -19,10 +19,12 @@ const productService = {
       page = 1,
       limit = 10,
       category_id,
+      category_ids,
       status,
       brand,
       tag,
       tag_id,
+      tag_ids,
       search,
       min_price,
       max_price,
@@ -35,7 +37,12 @@ const productService = {
     const offset = (page - 1) * limit;
     const where = {};
 
-    if (category_id) where.category_id = category_id;
+    const categoryList = category_ids ? String(category_ids).split(",").filter(Boolean) : null;
+    if (categoryList && categoryList.length > 0) {
+      where.category_id = { [Op.in]: categoryList };
+    } else if (category_id) {
+      where.category_id = category_id;
+    }
     if (status) where.status = status;
     if (brand) where.brand = brand;
 
@@ -61,7 +68,14 @@ const productService = {
     const safeSortBy = ALLOWED_SORT_BY.includes(sort_by) ? sort_by : "created_at";
     const safeSortOrder = ALLOWED_SORT_ORDER.includes(sort_order.toUpperCase()) ? sort_order.toUpperCase() : "DESC";
 
-    const tagFilter = tag_id ? { id: tag_id } : tag ? { name: tag } : null;
+    const tagList = tag_ids ? String(tag_ids).split(",").filter(Boolean) : null;
+    const tagFilter = tagList && tagList.length > 0
+      ? { id: { [Op.in]: tagList } }
+      : tag_id
+        ? { id: tag_id }
+        : tag
+          ? { name: tag }
+          : null;
 
     const includes = [
       { model: Category, as: "category", attributes: ["id", "name"] },
