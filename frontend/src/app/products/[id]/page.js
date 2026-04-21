@@ -6,6 +6,8 @@ import { ShoppingCart, Minus, Plus, Tag as TagIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { useCartStore } from "@/store/cartStore";
+import ProductGallery from "@/components/ProductGallery";
+import { getGallery } from "@/lib/media";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -53,15 +55,7 @@ export default function ProductDetailPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="bg-white rounded-lg overflow-hidden grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-        <div className="aspect-square bg-gray-100 rounded overflow-hidden">
-          {product.image_url ? (
-            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400 text-8xl">
-              {product.name[0]}
-            </div>
-          )}
-        </div>
+        <ProductGallery images={getGallery(product)} alt={product.name} />
 
         <div>
           {product.category && (

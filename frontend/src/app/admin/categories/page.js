@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Plus, Edit, Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
+import MediaUploader from "@/components/MediaUploader";
+import { getCoverPhoto } from "@/lib/media";
 
 export default function AdminCategoriesPage() {
   const [items, setItems] = useState([]);
@@ -83,6 +85,7 @@ export default function AdminCategoriesPage() {
           <thead className="bg-gray-50 text-left text-gray-600">
             <tr>
               <th className="p-3">ID</th>
+              <th className="p-3">Cover</th>
               <th className="p-3">Name</th>
               <th className="p-3">Description</th>
               <th className="p-3">Actions</th>
@@ -90,12 +93,21 @@ export default function AdminCategoriesPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={4} className="p-6 text-center text-gray-400">Loading…</td></tr>
+              <tr><td colSpan={5} className="p-6 text-center text-gray-400">Loading…</td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={4} className="p-6 text-center text-gray-400">No categories yet.</td></tr>
+              <tr><td colSpan={5} className="p-6 text-center text-gray-400">No categories yet.</td></tr>
             ) : items.map((c) => (
               <tr key={c.id} className="border-t">
                 <td className="p-3">{c.id}</td>
+                <td className="p-3">
+                  <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden">
+                    {getCoverPhoto(c) ? (
+                      <img src={getCoverPhoto(c)} alt={c.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">{c.name[0]}</div>
+                    )}
+                  </div>
+                </td>
                 <td className="p-3 font-medium">{c.name}</td>
                 <td className="p-3 text-gray-500">{c.description || "—"}</td>
                 <td className="p-3">
@@ -126,6 +138,23 @@ export default function AdminCategoriesPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full border rounded px-3 py-2" />
               </div>
+              {editing && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Cover Photo</label>
+                  <MediaUploader
+                    mediable_type="Category"
+                    mediable_id={editing.id}
+                    collection="cover"
+                    items={(editing.media || []).filter((m) => m.collection === "cover")}
+                    onChange={async () => {
+                      const r = await api.get(`/categories/${editing.id}`);
+                      setEditing(r.data.data);
+                      fetchAll();
+                    }}
+                    label="Upload cover"
+                  />
+                </div>
+              )}
               <button type="submit" className="w-full bg-primary text-white font-semibold py-2 rounded hover:bg-primary-dark">
                 {editing ? "Update" : "Create"}
               </button>

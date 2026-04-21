@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { Product, Category, Tag } = require("../model");
+const { Product, Category, Tag, Media } = require("../model");
 
 const ALLOWED_SORT_BY = ["created_at", "price", "name", "stock"];
 const ALLOWED_SORT_ORDER = ["ASC", "DESC"];
@@ -7,6 +7,7 @@ const ALLOWED_SORT_ORDER = ["ASC", "DESC"];
 const productIncludes = [
   { model: Category, as: "category", attributes: ["id", "name"] },
   { model: Tag, as: "tags", attributes: ["id", "name"], through: { attributes: [] } },
+  { model: Media, as: "media", required: false },
 ];
 
 const productService = {
@@ -86,6 +87,7 @@ const productService = {
         through: { attributes: [] },
         ...(tagFilter ? { where: tagFilter, required: true } : {}),
       },
+      { model: Media, as: "media", required: false },
     ];
 
     const { count, rows } = await Product.findAndCountAll({

@@ -4,9 +4,11 @@ import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import toast from "react-hot-toast";
 import { useCartStore } from "@/store/cartStore";
+import { getThumbnail } from "@/lib/media";
 
 export default function ProductCard({ product }) {
   const addItem = useCartStore((s) => s.addItem);
+  const thumb = getThumbnail(product);
 
   const handleAdd = (e) => {
     e.preventDefault();
@@ -19,9 +21,9 @@ export default function ProductCard({ product }) {
     <Link href={`/products/${product.id}`} className="group">
       <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition border border-gray-100">
         <div className="aspect-square bg-gray-100 relative overflow-hidden">
-          {product.image_url ? (
+          {thumb ? (
             <img
-              src={product.image_url}
+              src={thumb}
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition"
             />

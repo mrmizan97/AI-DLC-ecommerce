@@ -1,5 +1,7 @@
 const { Op } = require("sequelize");
-const { User } = require("../model");
+const { User, Media } = require("../model");
+
+const mediaInclude = { model: Media, as: "media", required: false };
 
 const ALLOWED_UPDATE_FIELDS = ["name", "phone", "role", "is_active"];
 
@@ -20,6 +22,8 @@ const userService = {
 
     const { count, rows } = await User.findAndCountAll({
       where,
+      include: [mediaInclude],
+      distinct: true,
       limit: parseInt(limit),
       offset: parseInt(offset),
       order: [["created_at", "DESC"]],
@@ -37,7 +41,7 @@ const userService = {
   },
 
   async findById(id) {
-    return await User.findByPk(id);
+    return await User.findByPk(id, { include: [mediaInclude] });
   },
 
   async update(id, data) {

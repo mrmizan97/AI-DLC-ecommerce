@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { User } = require("../model");
+const { User, Media } = require("../model");
 
 function generateToken(user) {
   return jwt.sign(
@@ -42,7 +42,9 @@ const authService = {
   },
 
   async getProfile(userId) {
-    return await User.findByPk(userId);
+    return await User.findByPk(userId, {
+      include: [{ model: Media, as: "media", required: false }],
+    });
   },
 };
 

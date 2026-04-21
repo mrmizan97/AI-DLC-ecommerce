@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import Pagination from "@/components/Pagination";
+import MediaUploader from "@/components/MediaUploader";
+import { getProfilePhoto } from "@/lib/media";
 
 export default function AdminUsersPage() {
   const currentUser = useAuthStore((s) => s.user);
@@ -125,7 +127,18 @@ export default function AdminUsersPage() {
               ) : users.map((u) => (
                 <tr key={u.id} className="border-t">
                   <td className="p-3">{u.id}</td>
-                  <td className="p-3 font-medium">{u.name}</td>
+                  <td className="p-3 font-medium">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center text-xs text-gray-600">
+                        {getProfilePhoto(u) ? (
+                          <img src={getProfilePhoto(u)} alt={u.name} className="w-full h-full object-cover" />
+                        ) : (
+                          u.name?.[0]?.toUpperCase()
+                        )}
+                      </div>
+                      <span>{u.name}</span>
+                    </div>
+                  </td>
                   <td className="p-3">{u.email}</td>
                   <td className="p-3 text-gray-500">{u.phone || "—"}</td>
                   <td className="p-3">
@@ -189,6 +202,21 @@ export default function AdminUsersPage() {
                 <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
                 <span className="text-sm">Active</span>
               </label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
+                <MediaUploader
+                  mediable_type="User"
+                  mediable_id={editing.id}
+                  collection="profile"
+                  items={(editing.media || []).filter((m) => m.collection === "profile")}
+                  onChange={async () => {
+                    const r = await api.get(`/users/${editing.id}`);
+                    setEditing(r.data.data);
+                    fetchAll();
+                  }}
+                  label="Upload photo"
+                />
+              </div>
               <button type="submit" className="w-full bg-primary text-white font-semibold py-2 rounded hover:bg-primary-dark">
                 Update
               </button>

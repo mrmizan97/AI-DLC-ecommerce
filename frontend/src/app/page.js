@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
 import ProductCard from "@/components/ProductCard";
+import { getCoverPhoto } from "@/lib/media";
 
 export default function HomePage() {
   const [categories, setCategories] = useState([]);
@@ -48,18 +49,25 @@ export default function HomePage() {
           <p className="text-gray-500">No categories yet.</p>
         ) : (
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/products?category_id=${cat.id}`}
-                className="bg-white rounded-lg p-4 text-center hover:shadow-md transition"
-              >
-                <div className="w-16 h-16 mx-auto mb-2 bg-orange-100 rounded-full flex items-center justify-center text-2xl">
-                  {cat.name[0]}
-                </div>
-                <p className="text-sm font-medium text-gray-700">{cat.name}</p>
-              </Link>
-            ))}
+            {categories.map((cat) => {
+              const cover = getCoverPhoto(cat);
+              return (
+                <Link
+                  key={cat.id}
+                  href={`/products?category_id=${cat.id}`}
+                  className="bg-white rounded-lg p-4 text-center hover:shadow-md transition"
+                >
+                  <div className="w-16 h-16 mx-auto mb-2 rounded-full overflow-hidden bg-orange-100 flex items-center justify-center text-2xl">
+                    {cover ? (
+                      <img src={cover} alt={cat.name} className="w-full h-full object-cover" />
+                    ) : (
+                      cat.name[0]
+                    )}
+                  </div>
+                  <p className="text-sm font-medium text-gray-700">{cat.name}</p>
+                </Link>
+              );
+            })}
           </div>
         )}
       </section>

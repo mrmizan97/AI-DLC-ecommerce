@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { exportToCsv } from "@/lib/exportCsv";
 import Pagination from "@/components/Pagination";
+import MediaUploader from "@/components/MediaUploader";
+import { getThumbnail } from "@/lib/media";
 
 const EMPTY_FORM = {
   name: "",
@@ -319,7 +321,7 @@ export default function AdminProductsPage() {
                 <tr key={p.id} className="border-t">
                   <td className="p-3">
                     <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden">
-                      {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400">{p.name[0]}</div>}
+                      {getThumbnail(p) ? <img src={getThumbnail(p)} alt={p.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400">{p.name[0]}</div>}
                     </div>
                   </td>
                   <td className="p-3 font-medium">{p.name}</td>
@@ -377,7 +379,30 @@ export default function AdminProductsPage() {
               </select>
             </div>
             <FormField label="Brand" value={form.brand} onChange={(v) => setForm({ ...form, brand: v })} />
-            <FormField label="Image URL" value={form.image_url} onChange={(v) => setForm({ ...form, image_url: v })} />
+
+            {editing && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Product Images (slider)</label>
+                <MediaUploader
+                  mediable_type="Product"
+                  mediable_id={editing.id}
+                  collection="gallery"
+                  multiple
+                  items={editing.media || []}
+                  onChange={async () => {
+                    const r = await api.get(`/products/${editing.id}`);
+                    setEditing(r.data.data);
+                    fetchProducts();
+                  }}
+                  label="Add images"
+                />
+                <p className="text-xs text-gray-500 mt-1">Click the ★ on a thumbnail to make it the main image.</p>
+              </div>
+            )}
+            {!editing && (
+              <p className="text-xs text-gray-500 italic">Save the product first, then add images.</p>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
               <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full border rounded px-3 py-2" />

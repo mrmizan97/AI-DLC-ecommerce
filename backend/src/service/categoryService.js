@@ -1,5 +1,7 @@
 const { Op } = require("sequelize");
-const { Category } = require("../model");
+const { Category, Media } = require("../model");
+
+const mediaInclude = { model: Media, as: "media", required: false };
 
 const categoryService = {
   async create(data) {
@@ -16,12 +18,13 @@ const categoryService = {
 
     return await Category.findAll({
       where,
+      include: [mediaInclude],
       order: [["name", "ASC"]],
     });
   },
 
   async findById(id) {
-    return await Category.findByPk(id);
+    return await Category.findByPk(id, { include: [mediaInclude] });
   },
 
   async update(id, data) {

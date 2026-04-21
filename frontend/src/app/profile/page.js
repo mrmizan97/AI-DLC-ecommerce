@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { User, Mail, Phone, Shield } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import MediaUploader from "@/components/MediaUploader";
+import { getProfilePhoto } from "@/lib/media";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -12,6 +14,10 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const fetched = useRef(false);
+
+  const refetch = () => {
+    api.get("/auth/profile").then((r) => setProfile(r.data.data));
+  };
 
   useEffect(() => {
     if (!user) {
@@ -36,14 +42,32 @@ export default function ProfilePage() {
 
       <div className="bg-white rounded-lg p-6">
         <div className="flex items-center gap-4 mb-6 pb-6 border-b">
-          <div className="w-20 h-20 bg-primary text-white rounded-full flex items-center justify-center text-3xl font-bold">
-            {profile?.name?.[0]?.toUpperCase()}
+          <div className="w-20 h-20 rounded-full overflow-hidden bg-primary text-white flex items-center justify-center text-3xl font-bold">
+            {getProfilePhoto(profile) ? (
+              <img src={getProfilePhoto(profile)} alt={profile?.name} className="w-full h-full object-cover" />
+            ) : (
+              profile?.name?.[0]?.toUpperCase()
+            )}
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="text-xl font-bold text-gray-900">{profile?.name}</h2>
             <p className="text-gray-500 capitalize">{profile?.role}</p>
           </div>
         </div>
+
+        {profile?.id && (
+          <div className="mb-6 pb-6 border-b">
+            <h3 className="font-medium text-gray-900 mb-2">Profile Photo</h3>
+            <MediaUploader
+              mediable_type="User"
+              mediable_id={profile.id}
+              collection="profile"
+              items={(profile.media || []).filter((m) => m.collection === "profile")}
+              onChange={refetch}
+              label="Change photo"
+            />
+          </div>
+        )}
 
         <div className="space-y-4">
           <InfoRow icon={<User size={18} />} label="Name" value={profile?.name} />

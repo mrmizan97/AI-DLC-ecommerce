@@ -6,6 +6,7 @@ const User = require("./User");
 const Order = require("./Order");
 const OrderItem = require("./OrderItem");
 const Notification = require("./Notification");
+const Media = require("./Media");
 
 // Category <-> Product (One-to-Many)
 Category.hasMany(Product, { foreignKey: "category_id", as: "products" });
@@ -35,4 +36,24 @@ Notification.belongsTo(User, { foreignKey: "user_id", as: "user" });
 Order.hasMany(Notification, { foreignKey: "order_id", as: "notifications" });
 Notification.belongsTo(Order, { foreignKey: "order_id", as: "order" });
 
-module.exports = { sequelize, Product, Category, Tag, User, Order, OrderItem, Notification };
+// Polymorphic media associations (filtered by mediable_type + scope)
+Product.hasMany(Media, {
+  foreignKey: "mediable_id",
+  constraints: false,
+  scope: { mediable_type: "Product" },
+  as: "media",
+});
+Category.hasMany(Media, {
+  foreignKey: "mediable_id",
+  constraints: false,
+  scope: { mediable_type: "Category" },
+  as: "media",
+});
+User.hasMany(Media, {
+  foreignKey: "mediable_id",
+  constraints: false,
+  scope: { mediable_type: "User" },
+  as: "media",
+});
+
+module.exports = { sequelize, Product, Category, Tag, User, Order, OrderItem, Notification, Media };
