@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Search, ShoppingCart, User, LogOut, Package, Menu, LayoutDashboard } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
@@ -14,6 +14,18 @@ export default function Header() {
   const cartCount = useCartStore((state) => state.totalItems());
   const [search, setSearch] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -66,30 +78,50 @@ export default function Header() {
             {user && <NotificationBell />}
 
             {user ? (
-              <div className="relative group">
-                <button className="flex items-center gap-1 hover:opacity-80">
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-1 hover:opacity-80"
+                >
                   <User size={22} />
                   <span className="hidden lg:inline">{user.name}</span>
                 </button>
-                <div className="absolute right-0 top-full mt-1 bg-white text-gray-800 rounded shadow-lg w-48 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition">
-                  <Link href="/profile" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
-                    <User size={16} /> Profile
-                  </Link>
-                  <Link href="/orders" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100">
-                    <Package size={16} /> My Orders
-                  </Link>
-                  {user.role === "admin" && (
-                    <Link href="/admin" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-primary">
-                      <LayoutDashboard size={16} /> Admin Dashboard
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 bg-white text-gray-800 rounded shadow-xl w-48 z-50 overflow-hidden">
+                    <Link
+                      href="/profile"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
+                    >
+                      <User size={16} /> Profile
                     </Link>
-                  )}
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
-                  >
-                    <LogOut size={16} /> Logout
-                  </button>
-                </div>
+                    <Link
+                      href="/orders"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
+                    >
+                      <Package size={16} /> My Orders
+                    </Link>
+                    {user.role === "admin" && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-primary font-medium"
+                      >
+                        <LayoutDashboard size={16} /> Admin Dashboard
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full text-left flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
+                    >
+                      <LogOut size={16} /> Logout
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <>
