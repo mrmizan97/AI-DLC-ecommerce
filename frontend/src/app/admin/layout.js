@@ -10,6 +10,7 @@ import {
   Tag,
   ShoppingBag,
   Users,
+  Star,
   ArrowLeft,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { href: "/admin/categories", label: "Categories", icon: Folder },
   { href: "/admin/tags", label: "Tags", icon: Tag },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/reviews", label: "Reviews", icon: Star },
   { href: "/admin", label: "Reports", icon: LayoutDashboard },
 ];
 

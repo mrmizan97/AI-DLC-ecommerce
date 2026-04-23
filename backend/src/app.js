@@ -10,6 +10,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const statsRoutes = require("./routes/statsRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const mediaRoutes = require("./routes/mediaRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 const path = require("path");
 const errorHandler = require("./middleware/errorHandler");
 
@@ -29,6 +30,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/media", mediaRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "AI DLC CRUD API is running" });

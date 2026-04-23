@@ -5,6 +5,7 @@ import { ShoppingCart } from "lucide-react";
 import toast from "react-hot-toast";
 import { useCartStore } from "@/store/cartStore";
 import { getThumbnail } from "@/lib/media";
+import StarRating from "@/components/StarRating";
 
 export default function ProductCard({ product }) {
   const addItem = useCartStore((s) => s.addItem);
@@ -46,6 +47,14 @@ export default function ProductCard({ product }) {
           {product.brand && (
             <p className="text-xs text-gray-500 mb-1">{product.brand}</p>
           )}
+          <div className="mb-1">
+            <StarRating
+              value={product.rating_average || 0}
+              count={product.rating_count || 0}
+              size={14}
+              showValue
+            />
+          </div>
           <div className="flex items-center justify-between">
             <span className="text-primary font-bold text-lg">
               ${parseFloat(product.price).toFixed(2)}

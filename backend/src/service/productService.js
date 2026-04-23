@@ -1,5 +1,6 @@
 const { Op } = require("sequelize");
 const { Product, Category, Tag, Media } = require("../model");
+const reviewService = require("./reviewService");
 
 const ALLOWED_SORT_BY = ["created_at", "price", "name", "stock"];
 const ALLOWED_SORT_ORDER = ["ASC", "DESC"];
@@ -99,8 +100,17 @@ const productService = {
       distinct: true,
     });
 
+    const statsMap = await reviewService.statsForProducts(rows.map((r) => r.id));
+    const data = rows.map((row) => {
+      const plain = row.toJSON();
+      const s = statsMap[plain.id] || { average: 0, count: 0 };
+      plain.rating_average = s.average;
+      plain.rating_count = s.count;
+      return plain;
+    });
+
     return {
-      data: rows,
+      data,
       pagination: {
         total: count,
         page: parseInt(page),
@@ -111,7 +121,13 @@ const productService = {
   },
 
   async findById(id) {
-    return await Product.findByPk(id, { include: productIncludes });
+    const product = await Product.findByPk(id, { include: productIncludes });
+    if (!product) return null;
+    const stats = await reviewService.statsForProduct(id);
+    const plain = product.toJSON();
+    plain.rating_average = stats.average;
+    plain.rating_count = stats.count;
+    return plain;
   },
 
   async update(id, data) {

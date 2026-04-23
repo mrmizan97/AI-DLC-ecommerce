@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { useCartStore } from "@/store/cartStore";
 import ProductGallery from "@/components/ProductGallery";
+import ProductReviews from "@/components/ProductReviews";
+import StarRating from "@/components/StarRating";
 import { getGallery } from "@/lib/media";
 
 export default function ProductDetailPage() {
@@ -62,6 +64,14 @@ export default function ProductDetailPage() {
             <p className="text-sm text-gray-500 mb-1">{product.category.name}</p>
           )}
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{product.name}</h1>
+          <div className="mb-2">
+            <StarRating
+              value={product.rating_average || 0}
+              count={product.rating_count || 0}
+              size={16}
+              showValue
+            />
+          </div>
           {product.brand && <p className="text-gray-600 mb-3">Brand: <span className="font-medium">{product.brand}</span></p>}
 
           <div className="bg-orange-50 p-4 rounded mb-4">
@@ -124,6 +134,8 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
+
+      <ProductReviews productId={id} />
     </div>
   );
 }

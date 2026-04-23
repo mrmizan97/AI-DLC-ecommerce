@@ -7,6 +7,7 @@ const Order = require("./Order");
 const OrderItem = require("./OrderItem");
 const Notification = require("./Notification");
 const Media = require("./Media");
+const Review = require("./Review");
 
 // Category <-> Product (One-to-Many)
 Category.hasMany(Product, { foreignKey: "category_id", as: "products" });
@@ -56,4 +57,12 @@ User.hasMany(Media, {
   as: "media",
 });
 
-module.exports = { sequelize, Product, Category, Tag, User, Order, OrderItem, Notification, Media };
+// Product <-> Review (One-to-Many)
+Product.hasMany(Review, { foreignKey: "product_id", as: "reviews", onDelete: "CASCADE" });
+Review.belongsTo(Product, { foreignKey: "product_id", as: "product" });
+
+// User <-> Review (One-to-Many)
+User.hasMany(Review, { foreignKey: "user_id", as: "reviews", onDelete: "CASCADE" });
+Review.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+module.exports = { sequelize, Product, Category, Tag, User, Order, OrderItem, Notification, Media, Review };
