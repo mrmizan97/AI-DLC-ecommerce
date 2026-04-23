@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/authStore";
 import { useNotificationStore } from "@/store/notificationStore";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
+import { playNotificationSound, stopNotificationSound } from "@/lib/notificationSound";
 
 export default function SocketProvider({ children }) {
   const { user, token } = useAuthStore();
@@ -28,6 +29,12 @@ export default function SocketProvider({ children }) {
         prepend(notification);
       }
       toast.success(`🔔 ${notification.message}`, { duration: 5000 });
+
+      if (user.role === "admin" && notification?.type === "order-created") {
+        playNotificationSound({ durationMs: 20000, intervalMs: 700, frequency: 880 });
+      } else if (user.role !== "admin" && notification?.type === "order-status") {
+        playNotificationSound({ durationMs: 5000, intervalMs: 700, frequency: 660 });
+      }
     });
 
     socket.on("connect_error", (err) => {
@@ -37,6 +44,7 @@ export default function SocketProvider({ children }) {
     return () => {
       socket.off("notification:new");
       socket.off("connect_error");
+      stopNotificationSound();
     };
   }, [user, token, fetchNotifications, prepend, reset]);
 
