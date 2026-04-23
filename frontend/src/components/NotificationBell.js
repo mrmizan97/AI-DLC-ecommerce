@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from "react";
 import { Bell } from "lucide-react";
 import { useNotificationStore } from "@/store/notificationStore";
 import { useAuthStore } from "@/store/authStore";
+import { stopNotificationSound } from "@/lib/notificationSound";
 
 export default function NotificationBell() {
   const router = useRouter();
@@ -49,7 +50,10 @@ export default function NotificationBell() {
   return (
     <div className="relative" ref={ref}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          setOpen(!open);
+          stopNotificationSound();
+        }}
         className="relative text-white hover:opacity-80 p-1"
         title="Notifications"
       >
