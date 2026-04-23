@@ -7,6 +7,7 @@ const ORDER = [
   "tag.test.js",
   "product.test.js",
   "order.test.js",
+  "review.test.js",
 ];
 
 class CustomSequencer extends TestSequencer {

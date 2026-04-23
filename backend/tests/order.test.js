@@ -153,20 +153,26 @@ describe("Orders API", () => {
 
   // ─── CANCEL ──────────────────────────────────────────────────────────────
 
-  test("PATCH /api/orders/:id/cancel - cannot cancel non-pending", async () => {
+  test("PATCH /api/orders/:id/cancel - customer denied (403)", async () => {
     const res = await request(app)
       .patch(`/api/orders/${orderId}/cancel`)
       .set("Authorization", `Bearer ${shared.customerToken}`);
+    expect(res.status).toBe(403);
+    expect(res.body.message).toMatch(/admin/i);
+  });
+
+  test("PATCH /api/orders/:id/cancel - admin cannot cancel non-pending", async () => {
+    const res = await request(app)
+      .patch(`/api/orders/${orderId}/cancel`)
+      .set("Authorization", `Bearer ${shared.adminToken}`);
     expect(res.status).toBe(400);
     expect(res.body.message).toContain("pending");
   });
 
-  test("POST /api/orders + CANCEL - cancel pending order restores stock", async () => {
-    // Check stock before
+  test("POST /api/orders + CANCEL - admin cancels pending order and restores stock", async () => {
     const beforeProd = await request(app).get(`/api/products/${shared.productId}`);
     const stockBefore = beforeProd.body.data.stock;
 
-    // Place a new order
     const orderRes = await request(app)
       .post("/api/orders")
       .set("Authorization", `Bearer ${shared.customerToken}`)
@@ -178,18 +184,15 @@ describe("Orders API", () => {
     expect(orderRes.status).toBe(201);
     cancelOrderId = orderRes.body.data.id;
 
-    // Check stock decreased
     const afterOrder = await request(app).get(`/api/products/${shared.productId}`);
     expect(afterOrder.body.data.stock).toBe(stockBefore - 3);
 
-    // Cancel the order
     const cancelRes = await request(app)
       .patch(`/api/orders/${cancelOrderId}/cancel`)
-      .set("Authorization", `Bearer ${shared.customerToken}`);
+      .set("Authorization", `Bearer ${shared.adminToken}`);
     expect(cancelRes.status).toBe(200);
     expect(cancelRes.body.data.status).toBe("cancelled");
 
-    // Check stock restored
     const afterCancel = await request(app).get(`/api/products/${shared.productId}`);
     expect(afterCancel.body.data.stock).toBe(stockBefore);
   });
