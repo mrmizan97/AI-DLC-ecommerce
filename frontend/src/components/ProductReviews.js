@@ -18,12 +18,7 @@ export default function ProductReviews({ productId }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  const [editingRatingId, setEditingRatingId] = useState(null);
-  const [editingCommentId, setEditingCommentId] = useState(null);
-  const [ratingDraft, setRatingDraft] = useState(0);
-  const [commentDraft, setCommentDraft] = useState("");
-  const [updating, setUpdating] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -50,6 +45,8 @@ export default function ProductReviews({ productId }) {
       .finally(() => setLoading(false));
   }, [productId]);
 
+  const alreadyReviewed = user && reviews.some((r) => r.user_id === user.id);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -64,10 +61,16 @@ export default function ProductReviews({ productId }) {
 
     setSubmitting(true);
     try {
-      await api.post(`/products/${productId}/reviews`, payload);
-      toast.success("Review added");
+      if (editingReviewId) {
+        await api.put(`/reviews/${editingReviewId}`, payload);
+        toast.success("Review updated");
+      } else {
+        await api.post(`/products/${productId}/reviews`, payload);
+        toast.success("Review added");
+      }
       setRating(0);
       setComment("");
+      setEditingReviewId(null);
       load();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to submit review");
@@ -87,46 +90,10 @@ export default function ProductReviews({ productId }) {
     }
   };
 
-  const startEditRating = (review) => {
-    setEditingCommentId(null);
-    setEditingRatingId(review.id);
-    setRatingDraft(review.rating || 0);
-  };
-
-  const startEditComment = (review) => {
-    setEditingRatingId(null);
-    setEditingCommentId(review.id);
-    setCommentDraft(review.comment || "");
-  };
-
-  const handleRatingUpdate = async (id) => {
-    if (!ratingDraft) return toast.error("Select a rating");
-    setUpdating(true);
-    try {
-      await api.put(`/reviews/${id}`, { rating: ratingDraft });
-      toast.success("Rating updated");
-      setEditingRatingId(null);
-      load();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update rating");
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const handleCommentUpdate = async (id) => {
-    const trimmed = commentDraft.trim();
-    setUpdating(true);
-    try {
-      await api.put(`/reviews/${id}`, { comment: trimmed || null });
-      toast.success("Review updated");
-      setEditingCommentId(null);
-      load();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update review");
-    } finally {
-      setUpdating(false);
-    }
+  const startEdit = (review) => {
+    setEditingReviewId(review.id);
+    setRating(review.rating || 0);
+    setComment(review.comment || "");
   };
 
   return (
@@ -141,9 +108,11 @@ export default function ProductReviews({ productId }) {
         </div>
       </div>
 
-      {token && (
+      {token && (!alreadyReviewed || editingReviewId) && (
         <form onSubmit={handleSubmit} className="border rounded p-4 mb-6 bg-gray-50">
-          <p className="text-sm font-medium text-gray-700 mb-2">Write a review</p>
+          <p className="text-sm font-medium text-gray-700 mb-2">
+            {editingReviewId ? "Edit your review" : "Write a review"}
+          </p>
           <div className="mb-3">
             <StarRating value={rating} onChange={setRating} size={24} readOnly={false} />
           </div>
@@ -155,15 +124,34 @@ export default function ProductReviews({ productId }) {
             className="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <div className="mt-3 flex justify-end">
+            {editingReviewId && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingReviewId(null);
+                  setRating(0);
+                  setComment("");
+                }}
+                className="border border-gray-300 text-gray-700 px-4 py-2 rounded text-sm font-medium mr-2 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+            )}
             <button
               type="submit"
               disabled={submitting}
               className="bg-primary text-white px-4 py-2 rounded text-sm font-medium hover:bg-primary-dark disabled:opacity-50"
             >
-              {submitting ? "Submitting..." : "Post review"}
+              {submitting ? "Submitting..." : editingReviewId ? "Update review" : "Post review"}
             </button>
           </div>
         </form>
+      )}
+
+      {token && alreadyReviewed && !editingReviewId && (
+        <p className="text-sm text-gray-500 mb-4">
+          You already submitted a review. Use the edit icon to update it.
+        </p>
       )}
 
       {!token && (
@@ -188,7 +176,8 @@ export default function ProductReviews({ productId }) {
       ) : (
         <ul className="divide-y">
           {reviews.map((r) => {
-            const canManage = user && (user.id === r.user_id || user.role === "admin");
+            const canEdit = user && (user.id === r.user_id || user.role === "admin");
+            const canDelete = user?.role === "admin";
 
             return (
               <li key={r.id} className="py-4">
@@ -196,27 +185,7 @@ export default function ProductReviews({ productId }) {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-medium text-gray-900 text-sm">{r.user?.name || "Anonymous"}</span>
-
-                      {editingRatingId === r.id ? (
-                        <div className="flex items-center gap-2">
-                          <StarRating value={ratingDraft} onChange={setRatingDraft} size={18} readOnly={false} />
-                          <button
-                            type="button"
-                            onClick={() => handleRatingUpdate(r.id)}
-                            disabled={updating}
-                            className="text-xs px-2 py-1 rounded bg-primary text-white disabled:opacity-50"
-                          >
-                            Save
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditingRatingId(null)}
-                            className="text-xs px-2 py-1 rounded border"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : r.rating ? (
+                      {r.rating ? (
                         <StarRating value={r.rating} size={14} />
                       ) : (
                         <span className="text-xs text-gray-400">No rating</span>
@@ -226,61 +195,31 @@ export default function ProductReviews({ productId }) {
                         {new Date(r.created_at).toLocaleDateString()}
                       </span>
                     </div>
-
-                    {editingCommentId === r.id ? (
-                      <div className="space-y-2">
-                        <textarea
-                          rows={3}
-                          value={commentDraft}
-                          onChange={(e) => setCommentDraft(e.target.value)}
-                          className="w-full border rounded p-2 text-sm"
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleCommentUpdate(r.id)}
-                            disabled={updating}
-                            className="text-xs px-2 py-1 rounded bg-primary text-white disabled:opacity-50"
-                          >
-                            Save
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditingCommentId(null)}
-                            className="text-xs px-2 py-1 rounded border"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : r.comment ? (
+                    {r.comment ? (
                       <p className="text-sm text-gray-700 whitespace-pre-wrap">{r.comment}</p>
                     ) : null}
                   </div>
 
-                  {canManage && (
+                  {(canEdit || canDelete) && (
                     <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => startEditRating(r)}
-                        className="text-gray-400 hover:text-blue-600"
-                        title="Edit rating"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        onClick={() => startEditComment(r)}
-                        className="text-gray-400 hover:text-blue-600"
-                        title="Edit review"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(r.id)}
-                        className="text-gray-400 hover:text-red-600"
-                        title="Delete review"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {canEdit && (
+                        <button
+                          onClick={() => startEdit(r)}
+                          className="text-gray-400 hover:text-blue-600"
+                          title="Edit review"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => handleDelete(r.id)}
+                          className="text-gray-400 hover:text-red-600"
+                          title="Delete review"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
