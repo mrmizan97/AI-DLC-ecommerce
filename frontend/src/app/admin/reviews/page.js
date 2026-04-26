@@ -25,7 +25,9 @@ export default function AdminReviewsPage() {
   const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 });
 
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ rating: 5, comment: "" });
+  const [form, setForm] = useState({ rating: 0, comment: "" });
+  const [savingRating, setSavingRating] = useState(false);
+  const [savingComment, setSavingComment] = useState(false);
 
   const activeFilterCount = Object.values(filters).filter((v) => v !== "").length;
 
@@ -61,30 +63,74 @@ export default function AdminReviewsPage() {
 
   const lastKey = useRef(null);
   useEffect(() => {
-    const key = `${filters.product_id}|${filters.min_rating}|${filters.max_rating}|${page}|${limit}`;
+    const key = `${filters.product_id}|${filters.min_rating}|${filters.max_rating}|${filters.search}|${page}|${limit}`;
     if (lastKey.current === key) return;
     lastKey.current = key;
     fetchReviews();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.product_id, filters.min_rating, filters.max_rating, page, limit]);
+  }, [filters.product_id, filters.min_rating, filters.max_rating, filters.search, page, limit]);
 
-  const openEdit = (r) => {
-    setEditing(r);
-    setForm({ rating: r.rating, comment: r.comment || "" });
+  const openEdit = (review) => {
+    setEditing(review);
+    setForm({ rating: review.rating || 0, comment: review.comment || "" });
   };
 
-  const handleUpdate = async (e) => {
-    e.preventDefault();
+  const closeEdit = () => {
+    setEditing(null);
+    fetchReviews();
+  };
+
+  const updateLocalReview = (id, patch) => {
+    setReviews((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    setEditing((prev) => (prev && prev.id === id ? { ...prev, ...patch } : prev));
+  };
+
+  const handleUpdateRating = async () => {
+    if (!editing) return;
+    if (!form.rating) return toast.error("Select a rating");
+
+    setSavingRating(true);
     try {
-      await api.put(`/reviews/${editing.id}`, {
-        rating: parseInt(form.rating),
-        comment: form.comment,
-      });
-      toast.success("Review updated");
-      setEditing(null);
-      fetchReviews();
+      const nextRating = parseInt(form.rating, 10);
+      await api.put(`/reviews/${editing.id}`, { rating: nextRating });
+      updateLocalReview(editing.id, { rating: nextRating });
+      toast.success("Rating updated");
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update");
+      toast.error(err.response?.data?.message || "Failed to update rating");
+    } finally {
+      setSavingRating(false);
+    }
+  };
+
+  const handleClearRating = async () => {
+    if (!editing) return;
+
+    setSavingRating(true);
+    try {
+      await api.put(`/reviews/${editing.id}`, { rating: null });
+      setForm((prev) => ({ ...prev, rating: 0 }));
+      updateLocalReview(editing.id, { rating: null });
+      toast.success("Rating cleared");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to clear rating");
+    } finally {
+      setSavingRating(false);
+    }
+  };
+
+  const handleUpdateComment = async () => {
+    if (!editing) return;
+
+    setSavingComment(true);
+    try {
+      const nextComment = form.comment.trim() || null;
+      await api.put(`/reviews/${editing.id}`, { comment: nextComment });
+      updateLocalReview(editing.id, { comment: nextComment });
+      toast.success("Review text updated");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update review text");
+    } finally {
+      setSavingComment(false);
     }
   };
 
@@ -99,6 +145,11 @@ export default function AdminReviewsPage() {
     }
   };
 
+  const clearFilters = () => {
+    setFilters({ product_id: "", min_rating: "", max_rating: "", search: "" });
+    setPage(1);
+  };
+
   const handleExport = () => {
     if (reviews.length === 0) return toast.error("No reviews to export");
     exportToCsv(
@@ -108,13 +159,18 @@ export default function AdminReviewsPage() {
         { label: "Product", value: (r) => r.product?.name || "" },
         { label: "User", value: (r) => r.user?.name || "" },
         { label: "Email", value: (r) => r.user?.email || "" },
-        { label: "Rating", value: "rating" },
+        { label: "Rating", value: (r) => r.rating ?? "" },
         { label: "Comment", value: "comment" },
         { label: "Date", value: (r) => new Date(r.created_at).toLocaleString() },
       ],
       reviews
     );
     toast.success(`Exported ${reviews.length} reviews`);
+  };
+
+  const renderRatingCell = (rating) => {
+    if (!rating) return <span className="text-gray-400 italic">No rating</span>;
+    return <StarRating value={rating} size={14} showValue />;
   };
 
   return (
@@ -155,7 +211,9 @@ export default function AdminReviewsPage() {
           >
             <option value="">All Products</option>
             {products.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
             ))}
           </select>
           <select
@@ -164,7 +222,11 @@ export default function AdminReviewsPage() {
             className="border rounded px-3 py-2 text-sm"
           >
             <option value="">Min rating</option>
-            {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}+</option>)}
+            {[1, 2, 3, 4, 5].map((n) => (
+              <option key={n} value={n}>
+                {n}+
+              </option>
+            ))}
           </select>
           <select
             value={filters.max_rating}
@@ -172,11 +234,15 @@ export default function AdminReviewsPage() {
             className="border rounded px-3 py-2 text-sm"
           >
             <option value="">Max rating</option>
-            {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
+            {[1, 2, 3, 4, 5].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
           </select>
           <input
             type="text"
-            placeholder="Search in comments…"
+            placeholder="Search in comments..."
             value={filters.search}
             onChange={(e) => setFilters({ ...filters, search: e.target.value })}
             onKeyDown={(e) => e.key === "Enter" && fetchReviews()}
@@ -189,7 +255,7 @@ export default function AdminReviewsPage() {
             Search
           </button>
           <button
-            onClick={() => setFilters({ product_id: "", min_rating: "", max_rating: "", search: "" })}
+            onClick={clearFilters}
             className="border px-4 py-2 rounded hover:bg-gray-50 text-sm"
           >
             Clear
@@ -212,35 +278,53 @@ export default function AdminReviewsPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="p-6 text-center text-gray-400">Loading…</td></tr>
-              ) : reviews.length === 0 ? (
-                <tr><td colSpan={6} className="p-6 text-center text-gray-400">No reviews found.</td></tr>
-              ) : reviews.map((r) => (
-                <tr key={r.id} className="border-t">
-                  <td className="p-3 font-medium">{r.product?.name || "—"}</td>
-                  <td className="p-3">
-                    <div>{r.user?.name || "—"}</div>
-                    <div className="text-xs text-gray-500">{r.user?.email}</div>
-                  </td>
-                  <td className="p-3">
-                    <StarRating value={r.rating} size={14} showValue />
-                  </td>
-                  <td className="p-3 max-w-md">
-                    <p className="line-clamp-2 text-gray-700">{r.comment || <span className="text-gray-400 italic">No comment</span>}</p>
-                  </td>
-                  <td className="p-3 text-gray-500">{new Date(r.created_at).toLocaleDateString()}</td>
-                  <td className="p-3">
-                    <div className="flex gap-1">
-                      <button onClick={() => openEdit(r)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" title="Edit">
-                        <Edit size={16} />
-                      </button>
-                      <button onClick={() => handleDelete(r.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded" title="Delete">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                <tr>
+                  <td colSpan={6} className="p-6 text-center text-gray-400">
+                    Loading...
                   </td>
                 </tr>
-              ))}
+              ) : reviews.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-6 text-center text-gray-400">
+                    No reviews found.
+                  </td>
+                </tr>
+              ) : (
+                reviews.map((r) => (
+                  <tr key={r.id} className="border-t">
+                    <td className="p-3 font-medium">{r.product?.name || "-"}</td>
+                    <td className="p-3">
+                      <div>{r.user?.name || "-"}</div>
+                      <div className="text-xs text-gray-500">{r.user?.email}</div>
+                    </td>
+                    <td className="p-3">{renderRatingCell(r.rating)}</td>
+                    <td className="p-3 max-w-md">
+                      <p className="line-clamp-2 text-gray-700">
+                        {r.comment || <span className="text-gray-400 italic">No comment</span>}
+                      </p>
+                    </td>
+                    <td className="p-3 text-gray-500">{new Date(r.created_at).toLocaleDateString()}</td>
+                    <td className="p-3">
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => openEdit(r)}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                          title="Edit"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(r.id)}
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                          title="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -252,7 +336,10 @@ export default function AdminReviewsPage() {
         total={pagination.total}
         limit={limit}
         onPageChange={setPage}
-        onLimitChange={(n) => { setLimit(n); setPage(1); }}
+        onLimitChange={(n) => {
+          setLimit(n);
+          setPage(1);
+        }}
       />
 
       {editing && (
@@ -260,38 +347,63 @@ export default function AdminReviewsPage() {
           <div className="bg-white rounded-lg w-full max-w-lg">
             <div className="flex justify-between items-center p-4 border-b">
               <h2 className="font-bold text-lg">Edit Review</h2>
-              <button onClick={() => setEditing(null)} className="p-1 hover:bg-gray-100 rounded">
+              <button onClick={closeEdit} className="p-1 hover:bg-gray-100 rounded">
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleUpdate} className="p-4 space-y-3">
+            <div className="p-4 space-y-5">
               <div>
                 <p className="text-sm text-gray-500 mb-1">
-                  {editing.product?.name} — by {editing.user?.name}
+                  {editing.product?.name} - by {editing.user?.name}
                 </p>
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Rating *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Edit rating only</label>
                 <StarRating
                   value={form.rating}
                   onChange={(n) => setForm({ ...form, rating: n })}
                   size={24}
                   readOnly={false}
                 />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleUpdateRating}
+                    disabled={savingRating}
+                    className="bg-primary text-white px-4 py-2 rounded text-sm font-semibold hover:bg-primary-dark disabled:opacity-50"
+                  >
+                    Save rating
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearRating}
+                    disabled={savingRating}
+                    className="border px-4 py-2 rounded text-sm hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Clear rating
+                  </button>
+                </div>
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Comment</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Edit review text only</label>
                 <textarea
                   rows={4}
                   value={form.comment}
                   onChange={(e) => setForm({ ...form, comment: e.target.value })}
                   className="w-full border rounded px-3 py-2"
                 />
+                <button
+                  type="button"
+                  onClick={handleUpdateComment}
+                  disabled={savingComment}
+                  className="mt-2 bg-primary text-white px-4 py-2 rounded text-sm font-semibold hover:bg-primary-dark disabled:opacity-50"
+                >
+                  Save review text
+                </button>
               </div>
-              <button type="submit" className="w-full bg-primary text-white font-semibold py-2 rounded hover:bg-primary-dark">
-                Update
-              </button>
-            </form>
+            </div>
           </div>
         </div>
       )}

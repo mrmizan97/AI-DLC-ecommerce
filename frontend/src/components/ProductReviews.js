@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import StarRating from "@/components/StarRating";
@@ -12,12 +12,18 @@ export default function ProductReviews({ productId }) {
   const token = useAuthStore((s) => s.token);
 
   const [reviews, setReviews] = useState([]);
-  const [stats, setStats] = useState({ average: 0, count: 0 });
+  const [stats, setStats] = useState({ average: 0, count: 0, review_count: 0 });
   const [loading, setLoading] = useState(true);
 
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const [editingRatingId, setEditingRatingId] = useState(null);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [ratingDraft, setRatingDraft] = useState(0);
+  const [commentDraft, setCommentDraft] = useState("");
+  const [updating, setUpdating] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -25,24 +31,40 @@ export default function ProductReviews({ productId }) {
       .get(`/products/${productId}/reviews`)
       .then((r) => {
         setReviews(r.data.data || []);
-        setStats(r.data.stats || { average: 0, count: 0 });
+        setStats(r.data.stats || { average: 0, count: 0, review_count: 0 });
       })
       .catch(() => toast.error("Failed to load reviews"))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    if (productId) load();
-  }, [productId]);
+    if (!productId) return;
 
-  const alreadyReviewed = user && reviews.some((r) => r.user_id === user.id);
+    api
+      .get(`/products/${productId}/reviews`)
+      .then((r) => {
+        setReviews(r.data.data || []);
+        setStats(r.data.stats || { average: 0, count: 0, review_count: 0 });
+      })
+      .catch(() => toast.error("Failed to load reviews"))
+      .finally(() => setLoading(false));
+  }, [productId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!rating) return toast.error("Please select a rating");
+
+    const trimmedComment = comment.trim();
+    if (!rating && !trimmedComment) {
+      return toast.error("Add a rating or write a review");
+    }
+
+    const payload = {};
+    if (rating) payload.rating = rating;
+    if (trimmedComment) payload.comment = trimmedComment;
+
     setSubmitting(true);
     try {
-      await api.post(`/products/${productId}/reviews`, { rating, comment });
+      await api.post(`/products/${productId}/reviews`, payload);
       toast.success("Review added");
       setRating(0);
       setComment("");
@@ -65,6 +87,48 @@ export default function ProductReviews({ productId }) {
     }
   };
 
+  const startEditRating = (review) => {
+    setEditingCommentId(null);
+    setEditingRatingId(review.id);
+    setRatingDraft(review.rating || 0);
+  };
+
+  const startEditComment = (review) => {
+    setEditingRatingId(null);
+    setEditingCommentId(review.id);
+    setCommentDraft(review.comment || "");
+  };
+
+  const handleRatingUpdate = async (id) => {
+    if (!ratingDraft) return toast.error("Select a rating");
+    setUpdating(true);
+    try {
+      await api.put(`/reviews/${id}`, { rating: ratingDraft });
+      toast.success("Rating updated");
+      setEditingRatingId(null);
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update rating");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleCommentUpdate = async (id) => {
+    const trimmed = commentDraft.trim();
+    setUpdating(true);
+    try {
+      await api.put(`/reviews/${id}`, { comment: trimmed || null });
+      toast.success("Review updated");
+      setEditingCommentId(null);
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update review");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg p-6 mt-6">
       <div className="flex items-center justify-between mb-4">
@@ -72,21 +136,16 @@ export default function ProductReviews({ productId }) {
         <div className="flex items-center gap-2">
           <StarRating value={stats.average} size={18} showValue />
           <span className="text-sm text-gray-500">
-            {stats.count} review{stats.count === 1 ? "" : "s"}
+            {(stats.review_count ?? reviews.length)} review{(stats.review_count ?? reviews.length) === 1 ? "" : "s"}
           </span>
         </div>
       </div>
 
-      {token && !alreadyReviewed && (
+      {token && (
         <form onSubmit={handleSubmit} className="border rounded p-4 mb-6 bg-gray-50">
           <p className="text-sm font-medium text-gray-700 mb-2">Write a review</p>
           <div className="mb-3">
-            <StarRating
-              value={rating}
-              onChange={setRating}
-              size={24}
-              readOnly={false}
-            />
+            <StarRating value={rating} onChange={setRating} size={24} readOnly={false} />
           </div>
           <textarea
             value={comment}
@@ -105,12 +164,6 @@ export default function ProductReviews({ productId }) {
             </button>
           </div>
         </form>
-      )}
-
-      {token && alreadyReviewed && (
-        <p className="text-sm text-gray-500 mb-4">
-          You&apos;ve already reviewed this product.
-        </p>
       )}
 
       {!token && (
@@ -135,35 +188,100 @@ export default function ProductReviews({ productId }) {
       ) : (
         <ul className="divide-y">
           {reviews.map((r) => {
-            const canDelete =
-              user && (user.id === r.user_id || user.role === "admin");
+            const canManage = user && (user.id === r.user_id || user.role === "admin");
+
             return (
               <li key={r.id} className="py-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-gray-900 text-sm">
-                        {r.user?.name || "Anonymous"}
-                      </span>
-                      <StarRating value={r.rating} size={14} />
+                      <span className="font-medium text-gray-900 text-sm">{r.user?.name || "Anonymous"}</span>
+
+                      {editingRatingId === r.id ? (
+                        <div className="flex items-center gap-2">
+                          <StarRating value={ratingDraft} onChange={setRatingDraft} size={18} readOnly={false} />
+                          <button
+                            type="button"
+                            onClick={() => handleRatingUpdate(r.id)}
+                            disabled={updating}
+                            className="text-xs px-2 py-1 rounded bg-primary text-white disabled:opacity-50"
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingRatingId(null)}
+                            className="text-xs px-2 py-1 rounded border"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : r.rating ? (
+                        <StarRating value={r.rating} size={14} />
+                      ) : (
+                        <span className="text-xs text-gray-400">No rating</span>
+                      )}
+
                       <span className="text-xs text-gray-400">
                         {new Date(r.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    {r.comment && (
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                        {r.comment}
-                      </p>
-                    )}
+
+                    {editingCommentId === r.id ? (
+                      <div className="space-y-2">
+                        <textarea
+                          rows={3}
+                          value={commentDraft}
+                          onChange={(e) => setCommentDraft(e.target.value)}
+                          className="w-full border rounded p-2 text-sm"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleCommentUpdate(r.id)}
+                            disabled={updating}
+                            className="text-xs px-2 py-1 rounded bg-primary text-white disabled:opacity-50"
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingCommentId(null)}
+                            className="text-xs px-2 py-1 rounded border"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : r.comment ? (
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{r.comment}</p>
+                    ) : null}
                   </div>
-                  {canDelete && (
-                    <button
-                      onClick={() => handleDelete(r.id)}
-                      className="text-gray-400 hover:text-red-600"
-                      title="Delete review"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+
+                  {canManage && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => startEditRating(r)}
+                        className="text-gray-400 hover:text-blue-600"
+                        title="Edit rating"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => startEditComment(r)}
+                        className="text-gray-400 hover:text-blue-600"
+                        title="Edit review"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(r.id)}
+                        className="text-gray-400 hover:text-red-600"
+                        title="Delete review"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   )}
                 </div>
               </li>

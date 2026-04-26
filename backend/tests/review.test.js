@@ -105,6 +105,26 @@ describe("Reviews API", () => {
     expect(res.body.data.comment).toBe("Updated text");
   });
 
+  test("PUT /api/reviews/:id - owner updates only rating", async () => {
+    const res = await request(app)
+      .put(`/api/reviews/${reviewId}`)
+      .set("Authorization", `Bearer ${shared.customerToken}`)
+      .send({ rating: 5 });
+    expect(res.status).toBe(200);
+    expect(res.body.data.rating).toBe(5);
+    expect(res.body.data.comment).toBe("Updated text");
+  });
+
+  test("PUT /api/reviews/:id - owner updates only comment", async () => {
+    const res = await request(app)
+      .put(`/api/reviews/${reviewId}`)
+      .set("Authorization", `Bearer ${shared.customerToken}`)
+      .send({ comment: "Comment-only edit" });
+    expect(res.status).toBe(200);
+    expect(res.body.data.rating).toBe(5);
+    expect(res.body.data.comment).toBe("Comment-only edit");
+  });
+
   test("PUT /api/reviews/:id - 400 invalid rating", async () => {
     const res = await request(app)
       .put(`/api/reviews/${reviewId}`)
