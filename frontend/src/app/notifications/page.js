@@ -24,6 +24,13 @@ export default function NotificationsPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
 
+  const formatTime = (notification) => {
+    const raw = notification.created_at || notification.createdAt;
+    if (!raw) return "";
+    const date = new Date(raw);
+    return Number.isNaN(date.getTime()) ? "" : date.toLocaleString();
+  };
+
   useEffect(() => {
     if (!user) {
       router.push("/login");
@@ -110,7 +117,7 @@ export default function NotificationsPage() {
               <div className="flex-1">
                 <p className={`text-gray-900 ${n.read ? "" : "font-medium"}`}>{n.message}</p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {new Date(n.createdAt).toLocaleString()} · {n.type}
+                  {formatTime(n)} · {n.type}
                 </p>
               </div>
               <button

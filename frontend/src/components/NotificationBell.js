@@ -47,6 +47,13 @@ export default function NotificationBell() {
     } catch {}
   };
 
+  const formatTime = (notification) => {
+    const raw = notification.created_at || notification.createdAt;
+    if (!raw) return "";
+    const date = new Date(raw);
+    return Number.isNaN(date.getTime()) ? "" : date.toLocaleString();
+  };
+
   return (
     <div className="relative" ref={ref}>
       <button
@@ -93,7 +100,7 @@ export default function NotificationBell() {
                     <div className="flex-1">
                       <p className="text-gray-900">{n.message}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {new Date(n.createdAt).toLocaleString()}
+                        {formatTime(n)}
                       </p>
                     </div>
                   </div>

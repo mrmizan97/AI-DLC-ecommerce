@@ -85,6 +85,13 @@ const orderService = {
         order_id: fullOrder.id,
       });
 
+      // Customer should also see immediate confirmation in notification list.
+      await notificationService.createForUser(fullOrder.user_id, {
+        type: "order-created",
+        message: `Your order #${fullOrder.order_number} has been placed successfully`,
+        order_id: fullOrder.id,
+      });
+
       // Initiate SSLCommerz only for online payments
       let gateway_url = null;
       if (method === "online") {
