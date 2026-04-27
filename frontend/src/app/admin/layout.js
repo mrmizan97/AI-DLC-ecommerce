@@ -12,6 +12,13 @@ import {
   Users,
   Star,
   ArrowLeft,
+  Zap,
+  RotateCcw,
+  Activity,
+  AlertTriangle,
+  Upload,
+  BarChart2,
+  Sparkles,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
@@ -22,7 +29,15 @@ const NAV_ITEMS = [
   { href: "/admin/tags", label: "Tags", icon: Tag },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/reviews", label: "Reviews", icon: Star },
-  { href: "/admin", label: "Reports", icon: LayoutDashboard },
+  { href: "/admin/coupons", label: "Coupons", icon: Tag },
+  { href: "/admin/flash-sales", label: "Flash Sales", icon: Zap },
+  { href: "/admin/returns", label: "Returns", icon: RotateCcw },
+  { href: "/admin/activity-logs", label: "Activity Logs", icon: Activity },
+  { href: "/admin/low-stock", label: "Low Stock", icon: AlertTriangle },
+  { href: "/admin/bulk-import", label: "Bulk Import", icon: Upload },
+  { href: "/admin/reports", label: "Reports", icon: BarChart2 },
+  { href: "/admin/ai", label: "AI", icon: Sparkles },
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
 ];
 
 export default function AdminLayout({ children }) {
