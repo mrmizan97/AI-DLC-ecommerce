@@ -8,6 +8,10 @@ const ORDER = [
   "product.test.js",
   "order.test.js",
   "review.test.js",
+  "wishlist.test.js",
+  "address.test.js",
+  "bulkImport.test.js",
+  "salesReport.test.js",
 ];
 
 class CustomSequencer extends TestSequencer {

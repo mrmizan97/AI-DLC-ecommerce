@@ -8,6 +8,15 @@ const OrderItem = require("./OrderItem");
 const Notification = require("./Notification");
 const Media = require("./Media");
 const Review = require("./Review");
+const ProductVariant = require("./ProductVariant");
+const VendorWithdrawal = require("./VendorWithdrawal");
+const Wishlist = require("./Wishlist");
+const Coupon = require("./Coupon");
+const FlashSale = require("./FlashSale");
+const ReturnRequest = require("./ReturnRequest");
+const ActivityLog = require("./ActivityLog");
+const Address = require("./Address");
+const LowStockAlert = require("./LowStockAlert");
 
 // Category <-> Product (One-to-Many)
 Category.hasMany(Product, { foreignKey: "category_id", as: "products" });
@@ -65,4 +74,72 @@ Review.belongsTo(Product, { foreignKey: "product_id", as: "product" });
 User.hasMany(Review, { foreignKey: "user_id", as: "reviews", onDelete: "CASCADE" });
 Review.belongsTo(User, { foreignKey: "user_id", as: "user" });
 
-module.exports = { sequelize, Product, Category, Tag, User, Order, OrderItem, Notification, Media, Review };
+// User (Vendor) <-> Product (One-to-Many)
+User.hasMany(Product, { foreignKey: "vendor_id", as: "vendor_products" });
+Product.belongsTo(User, { foreignKey: "vendor_id", as: "vendor" });
+
+// Product <-> ProductVariant (One-to-Many)
+Product.hasMany(ProductVariant, { foreignKey: "product_id", as: "variants", onDelete: "CASCADE" });
+ProductVariant.belongsTo(Product, { foreignKey: "product_id", as: "product" });
+
+// User <-> Wishlist (One-to-Many)
+User.hasMany(Wishlist, { foreignKey: "user_id", as: "wishlists" });
+Wishlist.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+// Product <-> Wishlist (One-to-Many)
+Product.hasMany(Wishlist, { foreignKey: "product_id", as: "wishlists" });
+Wishlist.belongsTo(Product, { foreignKey: "product_id", as: "product" });
+
+// User <-> Address (One-to-Many)
+User.hasMany(Address, { foreignKey: "user_id", as: "addresses" });
+Address.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+// User <-> VendorWithdrawal (One-to-Many)
+User.hasMany(VendorWithdrawal, { foreignKey: "vendor_id", as: "withdrawals" });
+VendorWithdrawal.belongsTo(User, { foreignKey: "vendor_id", as: "vendor" });
+
+// User <-> ActivityLog (One-to-Many)
+User.hasMany(ActivityLog, { foreignKey: "user_id", as: "activity_logs" });
+ActivityLog.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+// User <-> ReturnRequest (One-to-Many)
+User.hasMany(ReturnRequest, { foreignKey: "user_id", as: "return_requests" });
+ReturnRequest.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+// Order <-> ReturnRequest (One-to-Many)
+Order.hasMany(ReturnRequest, { foreignKey: "order_id", as: "return_requests" });
+ReturnRequest.belongsTo(Order, { foreignKey: "order_id", as: "order" });
+
+// Product <-> ReturnRequest (One-to-Many)
+Product.hasMany(ReturnRequest, { foreignKey: "product_id", as: "return_requests" });
+ReturnRequest.belongsTo(Product, { foreignKey: "product_id", as: "product" });
+
+// Product <-> LowStockAlert (One-to-Many)
+Product.hasMany(LowStockAlert, { foreignKey: "product_id", as: "low_stock_alerts" });
+LowStockAlert.belongsTo(Product, { foreignKey: "product_id", as: "product" });
+
+// Product <-> FlashSale (One-to-Many)
+Product.hasMany(FlashSale, { foreignKey: "product_id", as: "flash_sales" });
+FlashSale.belongsTo(Product, { foreignKey: "product_id", as: "product" });
+
+module.exports = {
+  sequelize,
+  Product,
+  Category,
+  Tag,
+  User,
+  Order,
+  OrderItem,
+  Notification,
+  Media,
+  Review,
+  ProductVariant,
+  VendorWithdrawal,
+  Wishlist,
+  Coupon,
+  FlashSale,
+  ReturnRequest,
+  ActivityLog,
+  Address,
+  LowStockAlert,
+};
