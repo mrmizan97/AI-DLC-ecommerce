@@ -3,6 +3,8 @@ const { sequelize, Order, OrderItem, Product, User } = require("../model");
 const { emitToAdmins, emitToUser } = require("../socket");
 const notificationService = require("./notificationService");
 const paymentService = require("./paymentService");
+const emailService = require("./emailService");
+const lowStockService = require("./lowStockService");
 
 const orderIncludes = [
   { model: User, as: "user", attributes: ["id", "name", "email"] },
@@ -66,16 +68,31 @@ const orderService = {
         { transaction }
       );
 
+      // Track pre-update stock values to compute new stock after literal update
+      const stockUpdates = [];
       for (const item of orderItems) {
+        // Re-fetch current stock before the update (within transaction)
+        const prodBefore = await Product.findByPk(item.product_id, { transaction });
+        const stockBefore = prodBefore ? prodBefore.stock : 0;
+
         await OrderItem.create({ order_id: order.id, ...item }, { transaction });
         await Product.update(
           { stock: sequelize.literal(`stock - ${item.quantity}`) },
           { where: { id: item.product_id }, transaction }
         );
+
+        stockUpdates.push({ productId: item.product_id, newStock: stockBefore - item.quantity });
       }
 
       await transaction.commit();
       const fullOrder = await Order.findByPk(order.id, { include: orderIncludes });
+
+      // Fire low stock checks — non-blocking
+      for (const { productId, newStock } of stockUpdates) {
+        lowStockService.check(productId, newStock).catch((err) =>
+          console.error("[orderService] lowStockService.check error:", err.message)
+        );
+      }
 
       const message = `New order #${fullOrder.order_number} from ${fullOrder.user?.name}`;
       emitToAdmins("order:created", { order: fullOrder, message });
@@ -91,6 +108,11 @@ const orderService = {
         message: `Your order #${fullOrder.order_number} has been placed successfully`,
         order_id: fullOrder.id,
       });
+
+      // Send order confirmation email — non-blocking
+      if (fullOrder.user) {
+        emailService.sendOrderConfirmation(fullOrder.user, fullOrder);
+      }
 
       // Initiate SSLCommerz only for online payments
       let gateway_url = null;
@@ -175,6 +197,12 @@ const orderService = {
       message,
       order_id: order.id,
     });
+
+    // Send status update email — non-blocking
+    const user = await User.findByPk(order.user_id, { attributes: ["id", "name", "email"] });
+    if (user) {
+      emailService.sendOrderStatusUpdate(user, updated, status);
+    }
 
     return updated;
   },

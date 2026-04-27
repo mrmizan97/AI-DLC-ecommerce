@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { User, Media } = require("../model");
+const emailService = require("./emailService");
 
 function generateToken(user) {
   return jwt.sign(
@@ -16,6 +17,8 @@ const authService = {
     const token = generateToken(user);
     const userData = user.toJSON();
     delete userData.password;
+    // Send welcome email — fire and forget, do not block registration
+    emailService.sendWelcomeEmail(userData);
     return { user: userData, token };
   },
 
