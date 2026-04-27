@@ -1,0 +1,91 @@
+services:
+
+  # ── MySQL Database ───────────────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: ai_dlc_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpass}
+      MYSQL_DATABASE: ${DB_NAME:-ai_dlc_crud}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-rootpass}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ── Backend API ──────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      target: production
+    container_name: ai_dlc_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+
+      # Database — points to the db service above
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-ai_dlc_crud}
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD:-rootpass}
+
+      # Auth
+      JWT_SECRET: ${JWT_SECRET:-changeme_use_a_long_random_string}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+
+      # URLs
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:3000}
+
+      # SSLCommerz payment gateway (sandbox defaults)
+      SSLCZ_STORE_ID: ${SSLCZ_STORE_ID:-testbox}
+      SSLCZ_STORE_PASSWORD: ${SSLCZ_STORE_PASSWORD:-qwerty}
+      SSLCZ_IS_LIVE: ${SSLCZ_IS_LIVE:-false}
+
+      # Email (optional — leave blank to disable)
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_PASS: ${EMAIL_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+
+      # AI features (optional — fallback responses used when absent)
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads:/app/uploads
+
+  # ── Frontend (Next.js) ───────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      target: production
+      args:
+        # Baked into the JS bundle at build time
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000/api}
+    container_name: ai_dlc_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      PORT: 3001
+      NODE_ENV: production
+    ports:
+      - "3001:3001"
+
+# ── Named Volumes ────────────────────────────────────────────────────────────
+volumes:
+  db_data:
+  uploads:

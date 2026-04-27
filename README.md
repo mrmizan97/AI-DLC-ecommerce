@@ -8,7 +8,11 @@ A full-stack e-commerce platform built with Node.js + Express (backend) and Next
 
 - [Requirements](#requirements)
 - [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
+- [Docker (recommended)](#docker-recommended)
+  - [Quick Start with Docker](#quick-start-with-docker)
+  - [Docker Environment Variables](#docker-environment-variables)
+  - [Useful Docker Commands](#useful-docker-commands)
+- [Getting Started (local)](#getting-started-local)
   - [1. Clone & Install](#1-clone--install)
   - [2. Configure Environment](#2-configure-environment)
   - [3. Set Up the Database](#3-set-up-the-database)
@@ -78,7 +82,158 @@ ai-dlc-crud/
 
 ---
 
-## Getting Started
+---
+
+## Docker (recommended)
+
+Running with Docker requires no local MySQL install or Node.js setup. A single command starts the database, backend API, and frontend app — migrations run automatically on first boot.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    docker-compose                        │
+│                                                         │
+│   ┌──────────┐    ┌──────────────┐    ┌─────────────┐  │
+│   │  MySQL   │◄───│   backend    │◄───│  frontend   │  │
+│   │  :3306   │    │   :3000      │    │   :3001     │  │
+│   │ (healthy)│    │ (migrations  │    │ (Next.js    │  │
+│   └──────────┘    │  + API)      │    │  standalone)│  │
+│                   └──────────────┘    └─────────────┘  │
+│                                                         │
+│   Volumes: db_data (MySQL data), uploads (media files)  │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Multi-stage Builds
+
+| Image | Stages | Final Size |
+|---|---|---|
+| **backend** | `deps` → `production` | ~180 MB |
+| **frontend** | `deps` → `builder` → `production` (standalone) | ~120 MB |
+
+The `deps` stage installs dependencies once and is cached by Docker. The `production` stage contains only the files needed to run — no dev dependencies, no source maps, no build tools.
+
+### Quick Start with Docker
+
+**Step 1 — Copy the environment file:**
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set at minimum:
+
+```env
+JWT_SECRET=replace_with_a_long_random_string
+```
+
+**Step 2 — Build and start everything:**
+
+```bash
+docker compose up --build
+```
+
+On first run Docker will:
+1. Pull MySQL 8.0 and wait for it to be healthy
+2. Build the backend image (installs deps, copies source)
+3. Run all database migrations automatically
+4. Build the frontend image (installs deps, runs `next build`, creates standalone output)
+5. Start all three services
+
+**Step 3 — Open the app:**
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:3001 |
+| Backend API | http://localhost:3000/api |
+| MySQL | localhost:3306 |
+
+> First build takes 2–4 minutes. Subsequent starts (without `--build`) take ~10 seconds.
+
+### Docker Environment Variables
+
+All variables live in a single `.env` file at the project root. Docker Compose reads it automatically.
+
+```env
+# Database
+DB_NAME=ai_dlc_crud
+DB_PASSWORD=rootpass
+
+# Auth — CHANGE THIS in production
+JWT_SECRET=replace_with_a_long_random_string
+JWT_EXPIRES_IN=7d
+
+# URLs — update if deploying to a domain
+FRONTEND_URL=http://localhost:3001
+BACKEND_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:3000/api
+
+# Payment gateway (sandbox defaults work for testing)
+SSLCZ_STORE_ID=testbox
+SSLCZ_STORE_PASSWORD=qwerty
+SSLCZ_IS_LIVE=false
+
+# Email (leave blank to disable — the app still works without it)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your@gmail.com
+EMAIL_PASS=your_app_password
+EMAIL_FROM=AI-DLC Shop <your@gmail.com>
+
+# AI features (leave blank — fallback responses are used automatically)
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Frontend API URL is baked into the JS bundle at build time
+# If you change this, rebuild the frontend image
+NEXT_PUBLIC_API_URL=http://localhost:3000/api
+```
+
+> **Note:** `NEXT_PUBLIC_API_URL` is a Next.js public variable. It is embedded in the JavaScript bundle at `docker compose build` time. If you change it after building, you must rebuild: `docker compose build frontend`.
+
+### Useful Docker Commands
+
+```bash
+# Start all services (foreground, see logs)
+docker compose up --build
+
+# Start in background
+docker compose up --build -d
+
+# View logs
+docker compose logs -f
+docker compose logs -f backend
+docker compose logs -f frontend
+
+# Stop all services
+docker compose down
+
+# Stop and delete volumes (wipes database)
+docker compose down -v
+
+# Rebuild a single service
+docker compose build backend
+docker compose build frontend
+
+# Run database migrations manually
+docker compose exec backend npx sequelize-cli db:migrate
+
+# Undo last migration
+docker compose exec backend npx sequelize-cli db:migrate:undo
+
+# Open a MySQL shell
+docker compose exec db mysql -u root -prootpass ai_dlc_crud
+
+# Open a shell inside the backend container
+docker compose exec backend sh
+
+# Run backend tests (requires local Node.js + MySQL — not inside Docker)
+cd backend && npm test
+```
+
+---
+
+## Getting Started (local)
 
 ### 1. Clone & Install
 
