@@ -3,7 +3,18 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { Search, ShoppingCart, User, LogOut, Package, Menu, LayoutDashboard } from "lucide-react";
+import {
+  Search,
+  ShoppingCart,
+  User,
+  LogOut,
+  Package,
+  Menu,
+  LayoutDashboard,
+  Heart,
+  Zap,
+  GitCompare,
+} from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
 import NotificationBell from "@/components/NotificationBell";
@@ -19,6 +30,12 @@ export default function Header() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
   const fetchedProfileFor = useRef(null);
+
+  // Wishlist count
+  const [wishlistCount, setWishlistCount] = useState(0);
+
+  // Compare count from localStorage
+  const [compareCount, setCompareCount] = useState(0);
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -40,10 +57,41 @@ export default function Header() {
       .catch(() => {});
   }, [user?.id, updateUser]);
 
+  // Fetch wishlist count for logged-in users
+  useEffect(() => {
+    if (!user) {
+      setWishlistCount(0);
+      return;
+    }
+    api
+      .get("/wishlist")
+      .then((r) => {
+        const items = r.data.data || [];
+        setWishlistCount(items.length);
+      })
+      .catch(() => {});
+  }, [user]);
+
+  // Read compare count from localStorage
+  useEffect(() => {
+    const readCompare = () => {
+      try {
+        const ids = JSON.parse(localStorage.getItem("compare_ids") || "[]");
+        setCompareCount(Array.isArray(ids) ? ids.length : 0);
+      } catch {
+        setCompareCount(0);
+      }
+    };
+    readCompare();
+    // Listen for storage changes (from other tabs or same page)
+    window.addEventListener("storage", readCompare);
+    return () => window.removeEventListener("storage", readCompare);
+  }, []);
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (search.trim()) {
-      router.push(`/products?search=${encodeURIComponent(search)}`);
+      router.push(`/search?q=${encodeURIComponent(search.trim())}`);
     }
   };
 
@@ -79,6 +127,45 @@ export default function Header() {
           </form>
 
           <nav className="hidden md:flex items-center gap-4 text-white">
+            {/* Flash Sales link */}
+            <Link
+              href="/flash-sales"
+              className="relative flex items-center gap-1 hover:opacity-80 text-sm font-medium"
+              title="Flash Sales"
+            >
+              <Zap size={20} />
+            </Link>
+
+            {/* Compare link */}
+            <Link
+              href="/compare"
+              className="relative flex items-center gap-1 hover:opacity-80"
+              title="Compare Products"
+            >
+              <GitCompare size={22} />
+              {compareCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-white text-primary text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {compareCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Wishlist link — only for logged-in users */}
+            {user && (
+              <Link
+                href="/wishlist"
+                className="relative flex items-center gap-1 hover:opacity-80"
+                title="My Wishlist"
+              >
+                <Heart size={22} />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-white text-primary text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
             <Link href="/cart" className="relative flex items-center gap-1 hover:opacity-80">
               <ShoppingCart size={22} />
               {cartCount > 0 && (
@@ -165,22 +252,47 @@ export default function Header() {
 
         {menuOpen && (
           <nav className="md:hidden mt-3 flex flex-col gap-2 text-white pb-2">
-            <Link href="/cart" className="py-2">Cart ({cartCount})</Link>
+            <Link href="/flash-sales" className="py-2 flex items-center gap-2">
+              <Zap size={16} /> Flash Sales
+            </Link>
+            <Link href="/compare" className="py-2 flex items-center gap-2">
+              <GitCompare size={16} /> Compare{compareCount > 0 ? ` (${compareCount})` : ""}
+            </Link>
+            {user && (
+              <Link href="/wishlist" className="py-2 flex items-center gap-2">
+                <Heart size={16} /> Wishlist{wishlistCount > 0 ? ` (${wishlistCount})` : ""}
+              </Link>
+            )}
+            <Link href="/cart" className="py-2">
+              Cart ({cartCount})
+            </Link>
             {user ? (
               <>
-                <Link href="/profile" className="py-2">Profile</Link>
+                <Link href="/profile" className="py-2">
+                  Profile
+                </Link>
                 {user.role !== "admin" && (
-                  <Link href="/orders" className="py-2">My Orders</Link>
+                  <Link href="/orders" className="py-2">
+                    My Orders
+                  </Link>
                 )}
                 {user.role === "admin" && (
-                  <Link href="/admin/orders" className="py-2 font-medium">Admin Panel</Link>
+                  <Link href="/admin/orders" className="py-2 font-medium">
+                    Admin Panel
+                  </Link>
                 )}
-                <button onClick={handleLogout} className="text-left py-2">Logout</button>
+                <button onClick={handleLogout} className="text-left py-2">
+                  Logout
+                </button>
               </>
             ) : (
               <>
-                <Link href="/login" className="py-2">Login</Link>
-                <Link href="/register" className="py-2">Sign Up</Link>
+                <Link href="/login" className="py-2">
+                  Login
+                </Link>
+                <Link href="/register" className="py-2">
+                  Sign Up
+                </Link>
               </>
             )}
           </nav>
