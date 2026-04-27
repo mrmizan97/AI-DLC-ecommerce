@@ -48,6 +48,26 @@ const Product = sequelize.define(
       type: DataTypes.ENUM("active", "inactive", "discontinued"),
       defaultValue: "active",
     },
+    vendor_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+    },
+    is_featured: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    view_count: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    sales_count: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
   },
   {
     tableName: "products",

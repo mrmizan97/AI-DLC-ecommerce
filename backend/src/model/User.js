@@ -28,9 +28,26 @@ const User = sequelize.define(
       allowNull: true,
     },
     role: {
-      type: DataTypes.ENUM("admin", "customer"),
+      type: DataTypes.ENUM("admin", "customer", "vendor"),
       allowNull: false,
       defaultValue: "customer",
+    },
+    company_name: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    vendor_slug: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      unique: true,
+    },
+    vendor_verified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    vendor_rating: {
+      type: DataTypes.DECIMAL(3, 2),
+      defaultValue: 0.00,
     },
     is_active: {
       type: DataTypes.BOOLEAN,
