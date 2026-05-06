@@ -18,11 +18,13 @@ const STATUS_COLORS = {
 export default function OrdersPage() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const hydrated = useAuthStore((s) => s._hydrated);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const fetched = useRef(false);
 
   useEffect(() => {
+    if (!hydrated) return;
     if (!user) {
       router.push("/login");
       return;

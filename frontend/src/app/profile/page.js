@@ -11,6 +11,7 @@ import { getProfilePhoto } from "@/lib/media";
 export default function ProfilePage() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const hydrated = useAuthStore((s) => s._hydrated);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const fetched = useRef(false);
@@ -20,6 +21,7 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
+    if (!hydrated) return;
     if (!user) {
       router.push("/login");
       return;
@@ -31,7 +33,7 @@ export default function ProfilePage() {
       .then((r) => setProfile(r.data.data))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [hydrated, user?.id]);
 
   if (!user) return null;
   if (loading) return <div className="max-w-3xl mx-auto p-8"><div className="bg-white h-64 rounded animate-pulse" /></div>;

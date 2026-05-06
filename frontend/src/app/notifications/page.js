@@ -11,6 +11,7 @@ import Pagination from "@/components/Pagination";
 export default function NotificationsPage() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const hydrated = useAuthStore((s) => s._hydrated);
   const items = useNotificationStore((s) => s.items);
   const loading = useNotificationStore((s) => s.loading);
   const pagination = useNotificationStore((s) => s.pagination);
@@ -32,15 +33,16 @@ export default function NotificationsPage() {
   };
 
   useEffect(() => {
+    if (!hydrated) return;
     if (!user) {
       router.push("/login");
       return;
     }
     fetch({ page, limit, ...(filter === "unread" ? { unread_only: "true" } : {}) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, filter, page, limit]);
+  }, [hydrated, user?.id, filter, page, limit]);
 
-  if (!user) return null;
+  if (!hydrated || !user) return null;
 
   const handleItemClick = async (n) => {
     if (!n.read) {

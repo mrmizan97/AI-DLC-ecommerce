@@ -12,6 +12,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { items, totalAmount, clear } = useCartStore();
   const user = useAuthStore((s) => s.user);
+  const hydrated = useAuthStore((s) => s._hydrated);
 
   const [form, setForm] = useState({
     shipping_address: "",
@@ -32,6 +33,7 @@ export default function CheckoutPage() {
   const [showManualForm, setShowManualForm] = useState(false);
 
   useEffect(() => {
+    if (!hydrated) return;
     if (!user) {
       toast.error("Please login first");
       router.push("/login");
@@ -40,7 +42,7 @@ export default function CheckoutPage() {
     } else {
       setForm((f) => ({ ...f, phone: user.phone || "" }));
     }
-  }, [user, items.length, router]);
+  }, [hydrated, user, items.length, router]);
 
   // Load saved addresses
   useEffect(() => {

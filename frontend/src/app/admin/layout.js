@@ -44,17 +44,18 @@ export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const hydrated = useAuthStore((s) => s._hydrated);
 
   useEffect(() => {
-    if (user === null) return; // still loading from localStorage
+    if (!hydrated) return;
     if (!user) {
       router.push("/login");
     } else if (user.role !== "admin") {
       router.push("/");
     }
-  }, [user, router]);
+  }, [hydrated, user, router]);
 
-  if (!user || user.role !== "admin") {
+  if (!hydrated || !user || user.role !== "admin") {
     return (
       <div className="max-w-4xl mx-auto p-12 text-center">
         <p className="text-gray-500">Checking access…</p>

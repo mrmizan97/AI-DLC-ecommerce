@@ -21,6 +21,7 @@ const EMPTY_FORM = { order_id: "", reason: "" };
 export default function ReturnsPage() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const hydrated = useAuthStore((s) => s._hydrated);
 
   const [returns, setReturns] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -47,6 +48,7 @@ export default function ReturnsPage() {
       .catch(() => {});
 
   useEffect(() => {
+    if (!hydrated) return;
     if (!user) {
       router.push("/login");
       return;

@@ -6,6 +6,7 @@ export const useAuthStore = create(
     (set) => ({
       user: null,
       token: null,
+      _hydrated: false,
 
       login: (user, token) => {
         if (typeof window !== "undefined") {
@@ -40,6 +41,11 @@ export const useAuthStore = create(
         return state.user?.role === "admin";
       },
     }),
-    { name: "auth-storage" }
+    {
+      name: "auth-storage",
+      onRehydrateStorage: () => (state) => {
+        if (state) state._hydrated = true;
+      },
+    }
   )
 );

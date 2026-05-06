@@ -32,6 +32,7 @@ const EMPTY_FORM = {
 export default function AddressesPage() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const hydrated = useAuthStore((s) => s._hydrated);
 
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +53,7 @@ export default function AddressesPage() {
   };
 
   useEffect(() => {
+    if (!hydrated) return;
     if (!user) {
       router.push("/login");
       return;
@@ -60,9 +62,9 @@ export default function AddressesPage() {
     fetched.current = true;
     fetchAddresses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [hydrated, user?.id]);
 
-  if (!user) return null;
+  if (!hydrated || !user) return null;
 
   const openAdd = () => {
     setEditTarget(null);

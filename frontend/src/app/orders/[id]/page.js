@@ -18,17 +18,19 @@ export default function OrderDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const hydrated = useAuthStore((s) => s._hydrated);
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!hydrated) return;
     if (!user) {
       router.push("/login");
       return;
     }
     fetchOrder();
-  }, [id, user]);
+  }, [hydrated, id, user]);
 
   const fetchOrder = async () => {
     try {

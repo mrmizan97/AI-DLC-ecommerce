@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 export default function WishlistPage() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const hydrated = useAuthStore((s) => s._hydrated);
   const addItem = useCartStore((s) => s.addItem);
 
   const [wishlist, setWishlist] = useState([]);
@@ -29,6 +30,7 @@ export default function WishlistPage() {
   };
 
   useEffect(() => {
+    if (!hydrated) return;
     if (!user) {
       router.push("/login");
       return;
@@ -37,9 +39,9 @@ export default function WishlistPage() {
     fetched.current = true;
     fetchWishlist();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [hydrated, user?.id]);
 
-  if (!user) return null;
+  if (!hydrated || !user) return null;
 
   const handleAddToCart = (product) => {
     addItem(product);
