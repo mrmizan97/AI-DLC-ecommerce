@@ -1,6 +1,6 @@
 # AI-DLC Shop
 
-A full-stack e-commerce platform built with Node.js + Express (backend) and Next.js (frontend). Supports multi-vendor selling, AI-powered features, real-time notifications, and a full admin dashboard.
+A full-stack single-vendor e-commerce platform built with Node.js + Express (backend) and Next.js (frontend). AI-powered features, real-time notifications, and a full admin dashboard.
 
 ---
 
@@ -39,7 +39,6 @@ A full-stack e-commerce platform built with Node.js + Express (backend) and Next
   - [Bulk Product Import](#bulk-product-import)
   - [Sales Reports & Export](#sales-reports--export)
   - [Activity Log](#activity-log)
-  - [Multi-vendor / Seller](#multi-vendor--seller)
   - [Media Uploads](#media-uploads)
   - [AI Features](#ai-features)
   - [AI Chatbot](#ai-chatbot)
@@ -374,7 +373,7 @@ All 305 tests should pass. Test output shows each feature suite (auth, products,
 - **Login:** `POST /api/auth/login` — `{ email, password }` → returns JWT token
 - **Profile:** `GET /api/auth/profile` (requires token)
 
-Roles: `customer` (default), `admin`, `vendor`
+Roles: `customer` (default), `admin`
 
 ---
 
@@ -677,22 +676,6 @@ GET /api/activity-logs/mine        # user's own activity
 ```
 
 Filter by: user, action type, entity type, date range. View at `/admin/activity-logs`.
-
----
-
-### Multi-vendor / Seller
-
-Users with the `vendor` role can manage their own product listings.
-
-```bash
-GET  /api/vendors/products          # vendor: own products
-POST /api/vendors/products          # vendor: create product
-PUT  /api/vendors/products/:id      # vendor: update own product
-POST /api/vendors/withdrawals       # vendor: request payout
-GET  /api/vendors/withdrawals       # vendor: own withdrawal history
-```
-
-Admins set a user's role to `vendor` via `/admin/users`.
 
 ---
 
