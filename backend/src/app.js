@@ -23,7 +23,6 @@ const addressRoutes = require("./routes/addressRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const compareRoutes = require("./routes/compareRoutes");
 const lowStockRoutes = require("./routes/lowStockRoutes");
-const vendorRoutes = require("./routes/vendorRoutes");
 const productVariantRoutes = require("./routes/productVariantRoutes");
 const path = require("path");
 const errorHandler = require("./middleware/errorHandler");
@@ -57,7 +56,6 @@ app.use("/api/addresses", addressRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/compare", compareRoutes);
 app.use("/api/low-stock", lowStockRoutes);
-app.use("/api/vendors", vendorRoutes);
 app.use("/api/product-variants", productVariantRoutes);
 
 app.get("/", (req, res) => {

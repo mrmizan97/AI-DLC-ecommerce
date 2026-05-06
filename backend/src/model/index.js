@@ -9,7 +9,6 @@ const Notification = require("./Notification");
 const Media = require("./Media");
 const Review = require("./Review");
 const ProductVariant = require("./ProductVariant");
-const VendorWithdrawal = require("./VendorWithdrawal");
 const Wishlist = require("./Wishlist");
 const Coupon = require("./Coupon");
 const FlashSale = require("./FlashSale");
@@ -74,10 +73,6 @@ Review.belongsTo(Product, { foreignKey: "product_id", as: "product" });
 User.hasMany(Review, { foreignKey: "user_id", as: "reviews", onDelete: "CASCADE" });
 Review.belongsTo(User, { foreignKey: "user_id", as: "user" });
 
-// User (Vendor) <-> Product (One-to-Many)
-User.hasMany(Product, { foreignKey: "vendor_id", as: "vendor_products" });
-Product.belongsTo(User, { foreignKey: "vendor_id", as: "vendor" });
-
 // Product <-> ProductVariant (One-to-Many)
 Product.hasMany(ProductVariant, { foreignKey: "product_id", as: "variants", onDelete: "CASCADE" });
 ProductVariant.belongsTo(Product, { foreignKey: "product_id", as: "product" });
@@ -93,10 +88,6 @@ Wishlist.belongsTo(Product, { foreignKey: "product_id", as: "product" });
 // User <-> Address (One-to-Many)
 User.hasMany(Address, { foreignKey: "user_id", as: "addresses" });
 Address.belongsTo(User, { foreignKey: "user_id", as: "user" });
-
-// User <-> VendorWithdrawal (One-to-Many)
-User.hasMany(VendorWithdrawal, { foreignKey: "vendor_id", as: "withdrawals" });
-VendorWithdrawal.belongsTo(User, { foreignKey: "vendor_id", as: "vendor" });
 
 // User <-> ActivityLog (One-to-Many)
 User.hasMany(ActivityLog, { foreignKey: "user_id", as: "activity_logs" });
@@ -134,7 +125,6 @@ module.exports = {
   Media,
   Review,
   ProductVariant,
-  VendorWithdrawal,
   Wishlist,
   Coupon,
   FlashSale,

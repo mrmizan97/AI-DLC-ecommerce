@@ -15,25 +15,25 @@ router.get(
 router.get("/sku/:sku", productVariantController.getBySku);
 router.get("/:variantId", productVariantController.getVariant);
 
-// Admin and Vendor can create/update/delete
+// Admin can create/update/delete
 router.post(
   "/product/:productId",
-  authorizeRoles("admin", "vendor"),
+  authorizeRoles("admin"),
   productVariantController.createVariant
 );
 router.post(
   "/product/:productId/bulk",
-  authorizeRoles("admin", "vendor"),
+  authorizeRoles("admin"),
   productVariantController.bulkCreateVariants
 );
 router.put(
   "/:variantId",
-  authorizeRoles("admin", "vendor"),
+  authorizeRoles("admin"),
   productVariantController.updateVariant
 );
 router.delete(
   "/:variantId",
-  authorizeRoles("admin", "vendor"),
+  authorizeRoles("admin"),
   productVariantController.deleteVariant
 );
 
