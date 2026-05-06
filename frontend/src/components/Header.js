@@ -37,6 +37,10 @@ export default function Header() {
   // Compare count from localStorage
   const [compareCount, setCompareCount] = useState(0);
 
+  // Track mount to avoid SSR hydration mismatch on counts that come from localStorage
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   useEffect(() => {
     const handleClick = (e) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
@@ -143,7 +147,7 @@ export default function Header() {
               title="Compare Products"
             >
               <GitCompare size={22} />
-              {compareCount > 0 && (
+              {mounted && compareCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-white text-primary text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                   {compareCount}
                 </span>
@@ -168,7 +172,7 @@ export default function Header() {
 
             <Link href="/cart" className="relative flex items-center gap-1 hover:opacity-80">
               <ShoppingCart size={22} />
-              {cartCount > 0 && (
+              {mounted && cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-white text-primary text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                   {cartCount}
                 </span>
@@ -256,7 +260,7 @@ export default function Header() {
               <Zap size={16} /> Flash Sales
             </Link>
             <Link href="/compare" className="py-2 flex items-center gap-2">
-              <GitCompare size={16} /> Compare{compareCount > 0 ? ` (${compareCount})` : ""}
+              <GitCompare size={16} /> Compare{mounted && compareCount > 0 ? ` (${compareCount})` : ""}
             </Link>
             {user && (
               <Link href="/wishlist" className="py-2 flex items-center gap-2">
@@ -264,7 +268,7 @@ export default function Header() {
               </Link>
             )}
             <Link href="/cart" className="py-2">
-              Cart ({cartCount})
+              Cart{mounted ? ` (${cartCount})` : ""}
             </Link>
             {user ? (
               <>
