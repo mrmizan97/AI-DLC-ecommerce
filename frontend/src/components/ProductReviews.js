@@ -192,7 +192,7 @@ export default function ProductReviews({ productId }) {
                       )}
 
                       <span className="text-xs text-gray-400">
-                        {new Date(r.created_at).toLocaleDateString()}
+                        {new Date(r.created_at || r.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                     {r.comment ? (

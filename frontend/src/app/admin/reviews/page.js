@@ -161,7 +161,7 @@ export default function AdminReviewsPage() {
         { label: "Email", value: (r) => r.user?.email || "" },
         { label: "Rating", value: (r) => r.rating ?? "" },
         { label: "Comment", value: "comment" },
-        { label: "Date", value: (r) => new Date(r.created_at).toLocaleString() },
+        { label: "Date", value: (r) => new Date(r.created_at || r.createdAt).toLocaleString() },
       ],
       reviews
     );
@@ -303,7 +303,7 @@ export default function AdminReviewsPage() {
                         {r.comment || <span className="text-gray-400 italic">No comment</span>}
                       </p>
                     </td>
-                    <td className="p-3 text-gray-500">{new Date(r.created_at).toLocaleDateString()}</td>
+                    <td className="p-3 text-gray-500">{new Date(r.created_at || r.createdAt).toLocaleDateString()}</td>
                     <td className="p-3">
                       <div className="flex gap-1">
                         <button
