@@ -320,7 +320,7 @@ export default function AdminReportsPage() {
                         <div className="font-medium">{c.name || c.customer_name || "—"}</div>
                         <div className="text-xs text-gray-500">{c.email || "—"}</div>
                       </td>
-                      <td className="p-3">{(c.orders || c.order_count ?? 0).toLocaleString()}</td>
+                      <td className="p-3">{((c.orders || c.order_count) ?? 0).toLocaleString()}</td>
                       <td className="p-3 font-semibold text-orange-600">{fmt(c.total_spent)}</td>
                     </tr>
                   ))}
