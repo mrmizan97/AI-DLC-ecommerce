@@ -75,7 +75,7 @@ export default function ProductDetailPage() {
   // Load product variants
   useEffect(() => {
     api
-      .get(`/product-variants?product_id=${id}`)
+      .get(`/product-variants/product/${id}`)
       .then((r) => {
         const variantData = r.data.data || [];
         setVariants(variantData);
