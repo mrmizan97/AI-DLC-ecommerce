@@ -7,8 +7,49 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
 
 const VALID_TYPES = ["Product", "Category", "User"];
 
-function buildUrl(filename) {
+const useCloudinary = !!process.env.CLOUDINARY_URL;
+let cloudinary = null;
+if (useCloudinary) {
+  // Lazy-require so local dev without the dep installed (older worktrees) still works.
+  cloudinary = require("cloudinary").v2;
+  // The SDK auto-parses CLOUDINARY_URL=cloudinary://<key>:<secret>@<cloud_name>
+}
+
+function uploadBufferToCloudinary(buffer, folder) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder, resource_type: "image" },
+      (err, result) => (err ? reject(err) : resolve(result))
+    );
+    stream.end(buffer);
+  });
+}
+
+function buildLocalUrl(filename) {
   return `${BACKEND_URL}/uploads/${filename}`;
+}
+
+async function persistFile(file, folder) {
+  if (useCloudinary) {
+    const result = await uploadBufferToCloudinary(file.buffer, folder);
+    // We reuse the existing `filename` column to store Cloudinary's public_id
+    // so deletes can find the asset later — no migration needed.
+    return { url: result.secure_url, filename: result.public_id };
+  }
+  return { url: buildLocalUrl(file.filename), filename: file.filename };
+}
+
+async function removeFile(media) {
+  if (useCloudinary) {
+    if (media.filename) {
+      try { await cloudinary.uploader.destroy(media.filename); } catch {}
+    }
+    return;
+  }
+  const fp = path.join(UPLOAD_DIR, path.basename(media.url));
+  if (fs.existsSync(fp)) {
+    try { fs.unlinkSync(fp); } catch {}
+  }
 }
 
 const mediaService = {
@@ -19,17 +60,19 @@ const mediaService = {
     if (collection === "profile" || collection === "cover") {
       const previous = await Media.findAll({ where: { mediable_type, mediable_id, collection } });
       for (const p of previous) {
-        const fp = path.join(UPLOAD_DIR, path.basename(p.url));
-        if (fs.existsSync(fp)) fs.unlinkSync(fp);
+        await removeFile(p);
         await p.destroy();
       }
     }
 
+    const folder = `ai-dlc/${mediable_type.toLowerCase()}`;
+    const { url, filename } = await persistFile(file, folder);
+
     const media = await Media.create({
       mediable_type,
       mediable_id,
-      url: buildUrl(file.filename),
-      filename: file.filename,
+      url,
+      filename,
       mime_type: file.mimetype,
       size: file.size,
       collection,
@@ -49,10 +92,7 @@ const mediaService = {
   async remove(id) {
     const m = await Media.findByPk(id);
     if (!m) return null;
-    const fp = path.join(UPLOAD_DIR, path.basename(m.url));
-    if (fs.existsSync(fp)) {
-      try { fs.unlinkSync(fp); } catch {}
-    }
+    await removeFile(m);
     await m.destroy();
     return m;
   },

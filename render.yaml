@@ -26,3 +26,5 @@ services:
       # JWT_SECRET (generate a random 32+ char string)
       # FRONTEND_URL (https://<your-vercel-app>.vercel.app)
       # BACKEND_URL (auto-set by Render to the service URL)
+      # CLOUDINARY_URL (cloudinary://<key>:<secret>@<cloud_name>) — required so
+      #   uploaded images survive Render's free-tier filesystem resets.

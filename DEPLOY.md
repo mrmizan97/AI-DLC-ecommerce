@@ -78,9 +78,24 @@ That's it — open the Vercel URL in a browser and you should see the shop.
 
 ---
 
+## File uploads on free tiers — use Cloudinary
+
+The backend writes user-uploaded images to `backend/uploads/` by default, which Render's free filesystem wipes on every restart. The repo now ships with a Cloudinary fallback that activates automatically when `CLOUDINARY_URL` is set:
+
+1. Sign up at [cloudinary.com](https://cloudinary.com) (free tier: 25 GB storage + 25 GB bandwidth/month).
+2. From the Cloudinary dashboard, copy the **API Environment variable** — looks like `cloudinary://<api_key>:<api_secret>@<cloud_name>`.
+3. In Render → your service → **Environment**, add:
+
+   ```
+   CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>
+   ```
+
+   Save → Render redeploys. New uploads now stream to Cloudinary; existing media URLs in your DB still resolve from `/uploads` (only re-uploads after the switch land in Cloudinary).
+
+Local dev keeps using `backend/uploads/` as before — leave `CLOUDINARY_URL` unset.
+
 ## Known free-tier limitations
 
-- **File uploads are ephemeral.** The backend writes user-uploaded images to `backend/uploads/`, which is wiped whenever Render rebuilds or restarts. To make uploads persist, swap multer's disk storage for [Cloudinary](https://cloudinary.com) (free tier: 25 GB) — the change touches `backend/src/middleware/upload.js` and the media controller.
 - **Render cold starts.** Idle sleep kicks in after 15 minutes. Either accept the cold start, upgrade Render to a Starter plan ($7/mo), or move the backend to [Fly.io](https://fly.io) free tier (no idle sleep, 3 shared-CPU machines).
 - **No background workers.** If you add scheduled jobs (e.g. flash-sale expiry), don't rely on a separate worker dyno — call them from a route that an external cron pings (e.g. [cron-job.org](https://cron-job.org), free).
 - **WebSocket on Render free.** Supported, but the cold start interrupts open sockets — clients have to reconnect after a sleep.
