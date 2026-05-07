@@ -1,10 +1,20 @@
 # Deploy AI-DLC Shop to free infrastructure
 
-This guide gets you to a live demo on three free services in roughly 15 minutes:
+This guide gets you to a live demo on three free services in roughly 15 minutes.
+
+## One-click deploy buttons
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/mrmizan97/AI-DLC-ecommerce/tree/deploy-free-infra)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmrmizan97%2FAI-DLC-ecommerce%2Ftree%2Fdeploy-free-infra&root-directory=frontend&env=NEXT_PUBLIC_API_URL&envDescription=Backend%20API%20URL%20%E2%80%94%20paste%20your%20Render%20service%20URL%20with%20%2Fapi%20appended&project-name=ai-dlc-shop)
+
+The Render button reads `render.yaml` from this branch and prompts only for the secret env vars (DB credentials, JWT_SECRET, Cloudinary). The Vercel button auto-fills the framework + root directory and prompts for `NEXT_PUBLIC_API_URL`.
+
+You still need accounts on **TiDB Cloud** (database) and **Cloudinary** (image hosting) — they don't have one-click integrations. Steps below.
 
 | Layer    | Service                       | What it gives you on free tier             |
 |----------|-------------------------------|--------------------------------------------|
 | DB       | TiDB Cloud Serverless         | 5 GB MySQL-compatible storage, free        |
+| Images   | Cloudinary                    | 25 GB storage, free                        |
 | Backend  | Render (Web Service)          | 750 h/month, sleeps after 15 min idle      |
 | Frontend | Vercel                        | Hobby plan, native Next.js host            |
 
