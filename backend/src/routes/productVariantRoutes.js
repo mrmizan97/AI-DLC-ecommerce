@@ -3,10 +3,7 @@ const router = express.Router();
 const productVariantController = require("../controller/productVariantController");
 const { authenticate, authorizeRoles } = require("../middleware/auth");
 
-// All routes require authentication
-router.use(authenticate);
-
-// Public can view variants
+// Public can view variants — anonymous shoppers need this to render product pages.
 router.get("/product/:productId", productVariantController.getProductVariants);
 router.get(
   "/product/:productId/grouped",
@@ -18,21 +15,25 @@ router.get("/:variantId", productVariantController.getVariant);
 // Admin can create/update/delete
 router.post(
   "/product/:productId",
+  authenticate,
   authorizeRoles("admin"),
   productVariantController.createVariant
 );
 router.post(
   "/product/:productId/bulk",
+  authenticate,
   authorizeRoles("admin"),
   productVariantController.bulkCreateVariants
 );
 router.put(
   "/:variantId",
+  authenticate,
   authorizeRoles("admin"),
   productVariantController.updateVariant
 );
 router.delete(
   "/:variantId",
+  authenticate,
   authorizeRoles("admin"),
   productVariantController.deleteVariant
 );
