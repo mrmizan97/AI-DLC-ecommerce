@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: ai-dlc-backend
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: NODE_ENV
+        value: production
+      - key: DB_SSL
+        value: "true"
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: SSLCZ_IS_LIVE
+        value: "false"
+      - key: SSLCZ_STORE_ID
+        value: testbox
+      - key: SSLCZ_STORE_PASSWORD
+        value: qwerty
+      # Set the rest manually in the Render dashboard:
+      # DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD (TiDB connection details)
+      # JWT_SECRET (generate a random 32+ char string)
+      # FRONTEND_URL (https://<your-vercel-app>.vercel.app)
+      # BACKEND_URL (auto-set by Render to the service URL)
