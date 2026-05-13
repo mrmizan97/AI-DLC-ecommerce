@@ -9,7 +9,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpass}
       MYSQL_DATABASE: ${DB_NAME:-ai_dlc_crud}
     ports:
-      - "3306:3306"
+      - "3308:3306"
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
@@ -32,38 +32,26 @@ services:
     environment:
       PORT: 3000
       NODE_ENV: production
-
-      # Database — points to the db service above
       DB_HOST: db
       DB_PORT: 3306
       DB_NAME: ${DB_NAME:-ai_dlc_crud}
       DB_USER: root
       DB_PASSWORD: ${DB_PASSWORD:-rootpass}
-
-      # Auth
       JWT_SECRET: ${JWT_SECRET:-changeme_use_a_long_random_string}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
-
-      # URLs
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
-      BACKEND_URL: ${BACKEND_URL:-http://localhost:3000}
-
-      # SSLCommerz payment gateway (sandbox defaults)
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4001}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:4000}
       SSLCZ_STORE_ID: ${SSLCZ_STORE_ID:-testbox}
       SSLCZ_STORE_PASSWORD: ${SSLCZ_STORE_PASSWORD:-qwerty}
       SSLCZ_IS_LIVE: ${SSLCZ_IS_LIVE:-false}
-
-      # Email (optional — leave blank to disable)
       EMAIL_HOST: ${EMAIL_HOST:-}
       EMAIL_PORT: ${EMAIL_PORT:-587}
       EMAIL_USER: ${EMAIL_USER:-}
       EMAIL_PASS: ${EMAIL_PASS:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
-
-      # AI features (optional — fallback responses used when absent)
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports:
-      - "3000:3000"
+      - "4000:3000"
     volumes:
       - uploads:/app/uploads
 
@@ -73,8 +61,7 @@ services:
       context: ./frontend
       target: production
       args:
-        # Baked into the JS bundle at build time
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000/api}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
     container_name: ai_dlc_frontend
     restart: unless-stopped
     depends_on:
@@ -83,9 +70,89 @@ services:
       PORT: 3001
       NODE_ENV: production
     ports:
-      - "3001:3001"
+      - "4001:3001"
+
+  # ── Prometheus (metrics TSDB) ────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: ai_dlc_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+
+  # ── Loki (log storage / query) ───────────────────────────────────────────────
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: ai_dlc_loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+
+  # ── Promtail (ships Docker container logs to Loki) ───────────────────────────
+  promtail:
+    image: grafana/promtail:2.9.4
+    container_name: ai_dlc_promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./observability/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+
+  # ── Jenkins (CI/CD via JCasC) ────────────────────────────────────────────────
+  jenkins:
+    build:
+      context: ./jenkins
+    container_name: ai_dlc_jenkins
+    restart: unless-stopped
+    environment:
+      JENKINS_ADMIN_ID: ${JENKINS_ADMIN_ID:-admin}
+      JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:-admin123}
+    ports:
+      - "8091:8080"
+      - "50001:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Bind-mount the whole project so the pipeline can build / lint / restart
+      - .:/workspace:rw
+
+  # ── Grafana (dashboards + logs UI) ───────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: ai_dlc_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3003:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+      - loki
 
 # ── Named Volumes ────────────────────────────────────────────────────────────
 volumes:
   db_data:
   uploads:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  jenkins_home:

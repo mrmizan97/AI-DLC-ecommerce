@@ -6,7 +6,20 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 
-# ── Stage 2: production image ──────────────────────────────────────────────────
+# ── Stage 2: development (full deps + node --watch) ───────────────────────────
+FROM node:20-alpine AS development
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+EXPOSE 3000
+
+# Source code is bind-mounted at runtime; node --watch reloads on change
+CMD ["sh", "-c", "npx sequelize-cli db:migrate || true && npm run dev"]
+
+# ── Stage 3: production image ──────────────────────────────────────────────────
 FROM node:20-alpine AS production
 
 WORKDIR /app

@@ -6,6 +6,20 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
+# ── Stage 1b: development (deps + next dev with HMR) ──────────────────────────
+FROM node:20-alpine AS development
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+ENV PORT=3001
+EXPOSE 3001
+
+# Source code is bind-mounted at runtime; Next.js dev server hot-reloads on change
+CMD ["npm", "run", "dev", "--", "-p", "3001", "-H", "0.0.0.0"]
+
 # ── Stage 2: build the Next.js application ────────────────────────────────────
 FROM node:20-alpine AS builder
 
