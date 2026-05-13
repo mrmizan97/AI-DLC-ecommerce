@@ -1,0 +1,14 @@
+configuration-as-code
+job-dsl
+workflow-aggregator
+pipeline-stage-view
+pipeline-graph-view
+git
+github-branch-source
+credentials-binding
+docker-workflow
+nodejs
+timestamper
+ansicolor
+build-timeout
+ws-cleanup
