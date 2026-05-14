@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const compression = require("compression");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
@@ -28,14 +29,24 @@ const sliderRoutes = require("./routes/sliderRoutes");
 const path = require("path");
 const errorHandler = require("./middleware/errorHandler");
 const { metricsMiddleware, metricsHandler } = require("./middleware/metrics");
+const cacheControl = require("./middleware/cacheControl");
 
 const app = express();
 
-app.use(cors());
+app.use(compression());
+app.use(cors({ maxAge: 86400 }));
 app.use(express.json());
 app.use(metricsMiddleware);
 app.get("/metrics", metricsHandler);
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+
+const publicReadCache = cacheControl(60);
+app.use("/api/categories", publicReadCache);
+app.use("/api/tags", publicReadCache);
+app.use("/api/sliders", publicReadCache);
+app.use("/api/flash-sales", publicReadCache);
+app.use("/api/products", publicReadCache);
+app.use("/api/search", publicReadCache);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -64,7 +75,7 @@ app.use("/api/product-variants", productVariantRoutes);
 app.use("/api/sliders", sliderRoutes);
 
 app.get("/", (req, res) => {
-  res.json({ message: "AI DLC CRUD API is running" });
+  res.json({ message: "API is running" });
 });
 
 app.use(errorHandler);

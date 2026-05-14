@@ -1,6 +1,10 @@
 const { Op } = require("sequelize");
 const FlashSale = require("../model/FlashSale");
 const Product = require("../model/Product");
+const cache = require("../lib/cache");
+
+const NS = "flash_sales";
+const ACTIVE_TTL = 30;
 
 // Ensure association is available even before model/index.js sets it up
 if (!FlashSale.associations || !FlashSale.associations.product) {
@@ -16,7 +20,9 @@ const productInclude = {
 
 const flashSaleService = {
   async create(data) {
-    return await FlashSale.create(data);
+    const record = await FlashSale.create(data);
+    cache.invalidate(NS);
+    return record;
   },
 
   async findAll(query = {}) {
@@ -70,26 +76,31 @@ const flashSaleService = {
   async update(id, data) {
     const record = await FlashSale.findByPk(id);
     if (!record) return null;
-    return await record.update(data);
+    const updated = await record.update(data);
+    cache.invalidate(NS);
+    return updated;
   },
 
   async delete(id) {
     const record = await FlashSale.findByPk(id);
     if (!record) return null;
     await record.destroy();
+    cache.invalidate(NS);
     return record;
   },
 
   async getActiveFlashSales() {
-    const now = new Date();
-    return await FlashSale.findAll({
-      where: {
-        is_active: true,
-        start_time: { [Op.lte]: now },
-        end_time: { [Op.gte]: now },
-      },
-      include: [productInclude],
-      order: [["start_time", "ASC"]],
+    return cache.memo(NS, "active", ACTIVE_TTL, async () => {
+      const now = new Date();
+      return await FlashSale.findAll({
+        where: {
+          is_active: true,
+          start_time: { [Op.lte]: now },
+          end_time: { [Op.gte]: now },
+        },
+        include: [productInclude],
+        order: [["start_time", "ASC"]],
+      });
     });
   },
 };

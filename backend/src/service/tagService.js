@@ -1,22 +1,27 @@
 const { Op } = require("sequelize");
 const { Tag } = require("../model");
+const cache = require("../lib/cache");
+
+const NS = "tags";
+const TTL = 300;
 
 const tagService = {
   async create(data) {
-    return await Tag.create(data);
+    const record = await Tag.create(data);
+    cache.invalidate(NS);
+    return record;
   },
 
   async findAll(query = {}) {
     const { search } = query;
-    const where = {};
-
-    if (search) {
-      where.name = { [Op.like]: `%${search}%` };
-    }
-
-    return await Tag.findAll({
-      where,
-      order: [["name", "ASC"]],
+    const cacheKey = search ? `s:${search}` : "all";
+    return cache.memo(NS, cacheKey, TTL, async () => {
+      const where = {};
+      if (search) where.name = { [Op.like]: `%${search}%` };
+      return await Tag.findAll({
+        where,
+        order: [["name", "ASC"]],
+      });
     });
   },
 
@@ -27,13 +32,16 @@ const tagService = {
   async update(id, data) {
     const record = await Tag.findByPk(id);
     if (!record) return null;
-    return await record.update(data);
+    const updated = await record.update(data);
+    cache.invalidate(NS);
+    return updated;
   },
 
   async delete(id) {
     const record = await Tag.findByPk(id);
     if (!record) return null;
     await record.destroy();
+    cache.invalidate(NS);
     return record;
   },
 };

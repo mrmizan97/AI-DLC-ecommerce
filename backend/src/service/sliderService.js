@@ -1,21 +1,29 @@
 const Slider = require("../model/Slider");
+const cache = require("../lib/cache");
+
+const NS = "sliders";
+const TTL = 300;
 
 const sliderService = {
   async create(data) {
-    return await Slider.create(data);
+    const record = await Slider.create(data);
+    cache.invalidate(NS);
+    return record;
   },
 
   async findAll({ active_only } = {}) {
-    const where = {};
-    if (active_only === "true" || active_only === true) {
-      where.is_active = true;
-    }
-    return await Slider.findAll({
-      where,
-      order: [
-        ["sort_order", "ASC"],
-        ["id", "ASC"],
-      ],
+    const isActiveFilter = active_only === "true" || active_only === true;
+    const cacheKey = isActiveFilter ? "active" : "all";
+    return cache.memo(NS, cacheKey, TTL, async () => {
+      const where = {};
+      if (isActiveFilter) where.is_active = true;
+      return await Slider.findAll({
+        where,
+        order: [
+          ["sort_order", "ASC"],
+          ["id", "ASC"],
+        ],
+      });
     });
   },
 
@@ -26,13 +34,16 @@ const sliderService = {
   async update(id, data) {
     const record = await Slider.findByPk(id);
     if (!record) return null;
-    return await record.update(data);
+    const updated = await record.update(data);
+    cache.invalidate(NS);
+    return updated;
   },
 
   async delete(id) {
     const record = await Slider.findByPk(id);
     if (!record) return null;
     await record.destroy();
+    cache.invalidate(NS);
     return record;
   },
 };
