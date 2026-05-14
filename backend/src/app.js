@@ -26,11 +26,14 @@ const lowStockRoutes = require("./routes/lowStockRoutes");
 const productVariantRoutes = require("./routes/productVariantRoutes");
 const path = require("path");
 const errorHandler = require("./middleware/errorHandler");
+const { metricsMiddleware, metricsHandler } = require("./middleware/metrics");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(metricsMiddleware);
+app.get("/metrics", metricsHandler);
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 app.use("/api/auth", authRoutes);
