@@ -9,14 +9,14 @@ module.exports = {
     );
     const idOf = (name) => categories.find((c) => c.name === name)?.id;
 
-    const img = (q) =>
-      `https://source.unsplash.com/600x600/?${encodeURIComponent(q)}`;
+    const img = (id) =>
+      `https://images.unsplash.com/photo-${id}?w=600&h=600&fit=crop`;
 
     await queryInterface.bulkInsert("products", [
       // Electronics
-      { name: "Wireless Bluetooth Headphones", description: "Over-ear, 30-hour battery, active noise cancellation.", price: 2499.00, stock: 25, category_id: idOf("Electronics"), brand: "SoundMax", sku: "ELEC-WBH-001", image_url: img("headphones"), status: "active", created_at: now, updated_at: now },
-      { name: "Smartphone Pro 12",             description: "6.5-inch display, 128GB storage, dual SIM, 5000mAh battery.", price: 28999.00, stock: 12, category_id: idOf("Electronics"), brand: "NovaTech",  sku: "ELEC-SPP-012", image_url: img("smartphone"), status: "active", created_at: now, updated_at: now },
-      { name: "Wireless Gaming Mouse",         description: "Ergonomic, 16000 DPI, RGB lighting, 70-hour battery.", price: 1499.00, stock: 40, category_id: idOf("Electronics"), brand: "ClickPro",  sku: "ELEC-WGM-003", image_url: img("mouse"), status: "active", created_at: now, updated_at: now },
+      { name: "Wireless Bluetooth Headphones", description: "Over-ear, 30-hour battery, active noise cancellation.", price: 2499.00, stock: 25, category_id: idOf("Electronics"), brand: "SoundMax", sku: "ELEC-WBH-001", image_url: img("1505740420928-5e560c06d30e"), status: "active", created_at: now, updated_at: now },
+      { name: "Smartphone Pro 12",             description: "6.5-inch display, 128GB storage, dual SIM, 5000mAh battery.", price: 28999.00, stock: 12, category_id: idOf("Electronics"), brand: "NovaTech",  sku: "ELEC-SPP-012", image_url: img("1511707171634-5f897ff02aa9"), status: "active", created_at: now, updated_at: now },
+      { name: "Wireless Gaming Mouse",         description: "Ergonomic, 16000 DPI, RGB lighting, 70-hour battery.", price: 1499.00, stock: 40, category_id: idOf("Electronics"), brand: "ClickPro",  sku: "ELEC-WGM-003", image_url: img("1527864550417-7fd91fc51a46"), status: "active", created_at: now, updated_at: now },
 
       // Fashion
       { name: "Classic Denim Jacket",          description: "100% cotton, mid-blue wash, regular fit.", price: 1899.00, stock: 30, category_id: idOf("Fashion"), brand: "UrbanWear", sku: "FASH-CDJ-001", image_url: img("denim,jacket"), status: "active", created_at: now, updated_at: now },
@@ -24,16 +24,16 @@ module.exports = {
       { name: "Leather Wallet Slim",           description: "Genuine leather, 8 card slots, RFID-blocking.", price: 999.00, stock: 50, category_id: idOf("Fashion"), brand: "Hidalgo",   sku: "FASH-LWS-003", image_url: img("leather,wallet"), status: "active", created_at: now, updated_at: now },
 
       // Home & Kitchen
-      { name: "Stainless Steel Cookware Set",  description: "10-piece set, induction-safe, with glass lids.", price: 5499.00, stock: 15, category_id: idOf("Home & Kitchen"), brand: "ChefMate", sku: "HOME-SCS-001", image_url: img("cookware,set"), status: "active", created_at: now, updated_at: now },
-      { name: "Espresso Coffee Maker",         description: "15-bar pump, milk frother, 1.5L removable tank.", price: 7299.00, stock: 8,  category_id: idOf("Home & Kitchen"), brand: "BrewLab", sku: "HOME-ECM-002", image_url: img("espresso,machine"), status: "active", created_at: now, updated_at: now },
+      { name: "Stainless Steel Cookware Set",  description: "10-piece set, induction-safe, with glass lids.", price: 5499.00, stock: 15, category_id: idOf("Home & Kitchen"), brand: "ChefMate", sku: "HOME-SCS-001", image_url: img("1556909114-f6e7ad7d3136"), status: "active", created_at: now, updated_at: now },
+      { name: "Espresso Coffee Maker",         description: "15-bar pump, milk frother, 1.5L removable tank.", price: 7299.00, stock: 8,  category_id: idOf("Home & Kitchen"), brand: "BrewLab", sku: "HOME-ECM-002", image_url: img("1495474472287-4d71bcdd2085"), status: "active", created_at: now, updated_at: now },
 
       // Books
-      { name: "The Pragmatic Programmer",      description: "Your Journey to Mastery — 20th Anniversary Edition.", price: 1299.00, stock: 35, category_id: idOf("Books"), brand: "Addison-Wesley", sku: "BOOK-TPP-001", image_url: img("book,programming"), status: "active", created_at: now, updated_at: now },
-      { name: "Designing Data-Intensive Apps", description: "The big ideas behind reliable, scalable software systems.", price: 1599.00, stock: 28, category_id: idOf("Books"), brand: "O'Reilly",        sku: "BOOK-DDIA-002", image_url: img("book,system,design"), status: "active", created_at: now, updated_at: now },
+      { name: "The Pragmatic Programmer",      description: "Your Journey to Mastery — 20th Anniversary Edition.", price: 1299.00, stock: 35, category_id: idOf("Books"), brand: "Addison-Wesley", sku: "BOOK-TPP-001", image_url: img("1532012197267-da84d127e765"), status: "active", created_at: now, updated_at: now },
+      { name: "Designing Data-Intensive Apps", description: "The big ideas behind reliable, scalable software systems.", price: 1599.00, stock: 28, category_id: idOf("Books"), brand: "O'Reilly",        sku: "BOOK-DDIA-002", image_url: img("1481627834876-b7833e8f5570"), status: "active", created_at: now, updated_at: now },
 
       // Sports
-      { name: "Yoga Mat Pro Grip",             description: "6mm thick, non-slip, eco-friendly TPE.", price: 1199.00, stock: 60, category_id: idOf("Sports & Outdoors"), brand: "FlexFit",   sku: "SPRT-YMP-001", image_url: img("yoga,mat"), status: "active", created_at: now, updated_at: now },
-      { name: "Adjustable Dumbbell 20kg",      description: "Quick-lock plates, knurled grip, sold as a pair.", price: 4999.00, stock: 18, category_id: idOf("Sports & Outdoors"), brand: "IronCore",  sku: "SPRT-ADB-002", image_url: img("dumbbell"), status: "active", created_at: now, updated_at: now },
+      { name: "Yoga Mat Pro Grip",             description: "6mm thick, non-slip, eco-friendly TPE.", price: 1199.00, stock: 60, category_id: idOf("Sports & Outdoors"), brand: "FlexFit",   sku: "SPRT-YMP-001", image_url: img("1545205597-3d9d02c29597"), status: "active", created_at: now, updated_at: now },
+      { name: "Adjustable Dumbbell 20kg",      description: "Quick-lock plates, knurled grip, sold as a pair.", price: 4999.00, stock: 18, category_id: idOf("Sports & Outdoors"), brand: "IronCore",  sku: "SPRT-ADB-002", image_url: img("1581009146145-b5ef050c2e1e"), status: "active", created_at: now, updated_at: now },
     ]);
   },
 
