@@ -61,19 +61,30 @@ export default function Header() {
       .catch(() => {});
   }, [user?.id, updateUser]);
 
-  // Fetch wishlist count for logged-in users
+  // Wishlist count: never fetched on landing. We read whatever value the
+  // /wishlist page (or a wishlist toggle action) last wrote to localStorage,
+  // and listen for a "wishlist:count" custom event so other tabs / pages can
+  // refresh us without an HTTP call.
   useEffect(() => {
     if (!user) {
       setWishlistCount(0);
       return;
     }
-    api
-      .get("/wishlist")
-      .then((r) => {
-        const items = r.data.data || [];
-        setWishlistCount(items.length);
-      })
-      .catch(() => {});
+    const read = () => {
+      const cached = parseInt(localStorage.getItem("wishlist_count") || "0", 10);
+      setWishlistCount(Number.isFinite(cached) ? cached : 0);
+    };
+    read();
+    const handler = (e) => {
+      if (typeof e.detail?.count === "number") setWishlistCount(e.detail.count);
+      else read();
+    };
+    window.addEventListener("wishlist:count", handler);
+    window.addEventListener("storage", read);
+    return () => {
+      window.removeEventListener("wishlist:count", handler);
+      window.removeEventListener("storage", read);
+    };
   }, [user]);
 
   // Read compare count from localStorage

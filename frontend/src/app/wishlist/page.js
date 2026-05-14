@@ -20,11 +20,22 @@ export default function WishlistPage() {
   const [removing, setRemoving] = useState(null);
   const fetched = useRef(false);
 
+  const publishCount = (count) => {
+    try {
+      localStorage.setItem("wishlist_count", String(count));
+    } catch {}
+    window.dispatchEvent(new CustomEvent("wishlist:count", { detail: { count } }));
+  };
+
   const fetchWishlist = () => {
     setLoading(true);
     api
       .get("/wishlist")
-      .then((r) => setWishlist(r.data.data || []))
+      .then((r) => {
+        const items = r.data.data || [];
+        setWishlist(items);
+        publishCount(items.length);
+      })
       .catch(() => toast.error("Failed to load wishlist"))
       .finally(() => setLoading(false));
   };
@@ -53,7 +64,11 @@ export default function WishlistPage() {
     try {
       await api.delete(`/wishlist/${productId}`);
       toast.success(`${productName} removed from wishlist`);
-      setWishlist((prev) => prev.filter((item) => item.product?.id !== productId));
+      setWishlist((prev) => {
+        const next = prev.filter((item) => item.product?.id !== productId);
+        publishCount(next.length);
+        return next;
+      });
     } catch {
       toast.error("Failed to remove from wishlist");
     } finally {

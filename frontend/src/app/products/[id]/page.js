@@ -111,13 +111,20 @@ export default function ProductDetailPage() {
     }
     setWishlistLoading(true);
     try {
+      const cached = parseInt(localStorage.getItem("wishlist_count") || "0", 10) || 0;
       if (wishlisted) {
         await api.delete(`/wishlist/${id}`);
         setWishlisted(false);
+        const next = Math.max(0, cached - 1);
+        localStorage.setItem("wishlist_count", String(next));
+        window.dispatchEvent(new CustomEvent("wishlist:count", { detail: { count: next } }));
         toast.success("Removed from wishlist");
       } else {
         await api.post("/wishlist", { product_id: parseInt(id) });
         setWishlisted(true);
+        const next = cached + 1;
+        localStorage.setItem("wishlist_count", String(next));
+        window.dispatchEvent(new CustomEvent("wishlist:count", { detail: { count: next } }));
         toast.success("Added to wishlist");
       }
     } catch {
