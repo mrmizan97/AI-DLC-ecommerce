@@ -1,5 +1,15 @@
 import api from "./api";
 
+export async function uploadFile({ file, folder = "ai-dlc/misc" }) {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("folder", folder);
+  const res = await api.post("/uploads", fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data.data;
+}
+
 export async function uploadMedia({ file, mediable_type, mediable_id, collection = "default", is_thumbnail = false }) {
   const fd = new FormData();
   fd.append("file", file);

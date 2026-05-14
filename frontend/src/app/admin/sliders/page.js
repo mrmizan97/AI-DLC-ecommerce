@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Edit2, Trash2, X, Images, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Edit2, Trash2, X, Images, ArrowUp, ArrowDown, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
+import { uploadFile } from "@/lib/media";
 
 const EMPTY_FORM = {
   title: "",
@@ -22,6 +23,23 @@ export default function AdminSlidersPage() {
   const [editItem, setEditItem] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleBannerUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { url } = await uploadFile({ file, folder: "ai-dlc/slider/banner" });
+      setForm((f) => ({ ...f, image_url: url }));
+      toast.success("Banner uploaded");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Upload failed");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
 
   useEffect(() => {
     fetchItems();
@@ -268,7 +286,23 @@ export default function AdminSlidersPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Banner image *
+                </label>
+                <div className="flex items-center gap-2 mb-2">
+                  <label className="inline-flex items-center gap-2 px-3 py-2 rounded border border-orange-300 text-orange-700 hover:bg-orange-50 text-sm cursor-pointer">
+                    <Upload size={14} />
+                    {uploading ? "Uploading…" : "Upload file"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBannerUpload}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                  </label>
+                  <span className="text-xs text-gray-400">or paste a URL</span>
+                </div>
                 <input
                   required
                   type="url"
