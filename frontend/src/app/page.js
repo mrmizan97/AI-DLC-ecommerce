@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
 import ProductCard from "@/components/ProductCard";
+import HeroSlider from "@/components/HeroSlider";
 import { getCoverPhoto } from "@/lib/media";
 
 export default function HomePage() {
@@ -26,16 +27,7 @@ export default function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
-      <section className="bg-gradient-to-r from-primary to-orange-400 rounded-lg p-8 md:p-12 text-white mb-8">
-        <h1 className="text-3xl md:text-5xl font-bold mb-2">Mega Sale is Live!</h1>
-        <p className="text-lg md:text-xl mb-4 opacity-90">Up to 70% off on top brands</p>
-        <Link
-          href="/products"
-          className="inline-block bg-white text-primary font-semibold px-6 py-2 rounded hover:bg-gray-100"
-        >
-          Shop Now
-        </Link>
-      </section>
+      <HeroSlider />
 
       <section className="mb-8">
         <h2 className="text-xl font-bold mb-4 text-gray-800">Shop by Category</h2>

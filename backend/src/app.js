@@ -24,6 +24,7 @@ const searchRoutes = require("./routes/searchRoutes");
 const compareRoutes = require("./routes/compareRoutes");
 const lowStockRoutes = require("./routes/lowStockRoutes");
 const productVariantRoutes = require("./routes/productVariantRoutes");
+const sliderRoutes = require("./routes/sliderRoutes");
 const path = require("path");
 const errorHandler = require("./middleware/errorHandler");
 const { metricsMiddleware, metricsHandler } = require("./middleware/metrics");
@@ -60,6 +61,7 @@ app.use("/api/search", searchRoutes);
 app.use("/api/compare", compareRoutes);
 app.use("/api/low-stock", lowStockRoutes);
 app.use("/api/product-variants", productVariantRoutes);
+app.use("/api/sliders", sliderRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "AI DLC CRUD API is running" });

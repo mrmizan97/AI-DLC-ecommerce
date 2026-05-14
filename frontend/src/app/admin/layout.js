@@ -19,6 +19,7 @@ import {
   Upload,
   BarChart2,
   Sparkles,
+  Images,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
@@ -30,6 +31,7 @@ const NAV_ITEMS = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/reviews", label: "Reviews", icon: Star },
   { href: "/admin/coupons", label: "Coupons", icon: Tag },
+  { href: "/admin/sliders", label: "Sliders", icon: Images },
   { href: "/admin/flash-sales", label: "Flash Sales", icon: Zap },
   { href: "/admin/returns", label: "Returns", icon: RotateCcw },
   { href: "/admin/activity-logs", label: "Activity Logs", icon: Activity },

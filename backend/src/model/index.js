@@ -16,6 +16,7 @@ const ReturnRequest = require("./ReturnRequest");
 const ActivityLog = require("./ActivityLog");
 const Address = require("./Address");
 const LowStockAlert = require("./LowStockAlert");
+const Slider = require("./Slider");
 
 // Category <-> Product (One-to-Many)
 Category.hasMany(Product, { foreignKey: "category_id", as: "products" });
@@ -132,4 +133,5 @@ module.exports = {
   ActivityLog,
   Address,
   LowStockAlert,
+  Slider,
 };
