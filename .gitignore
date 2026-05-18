@@ -57,3 +57,5 @@ frontend/*.tsbuildinfo
 
 # Debug
 .pnpm-debug.log*
+.tmp-vercel-deploy.js
+bash.exe.stackdump
