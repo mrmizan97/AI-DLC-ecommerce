@@ -17,6 +17,9 @@ const ActivityLog = require("./ActivityLog");
 const Address = require("./Address");
 const LowStockAlert = require("./LowStockAlert");
 const Slider = require("./Slider");
+const ProductEmbedding = require("./ProductEmbedding");
+const ProductEnrichment = require("./ProductEnrichment");
+const ReviewSummary = require("./ReviewSummary");
 
 // Category <-> Product (One-to-Many)
 Category.hasMany(Product, { foreignKey: "category_id", as: "products" });
@@ -134,4 +137,7 @@ module.exports = {
   Address,
   LowStockAlert,
   Slider,
+  ProductEmbedding,
+  ProductEnrichment,
+  ReviewSummary,
 };

@@ -28,6 +28,7 @@ const productVariantRoutes = require("./routes/productVariantRoutes");
 const sliderRoutes = require("./routes/sliderRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const jobsRoutes = require("./routes/jobsRoutes");
+const aiTierTwoRoutes = require("./routes/aiTierTwoRoutes");
 const path = require("path");
 const errorHandler = require("./middleware/errorHandler");
 const { metricsMiddleware, metricsHandler } = require("./middleware/metrics");
@@ -77,6 +78,7 @@ app.use("/api/product-variants", productVariantRoutes);
 app.use("/api/sliders", sliderRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/jobs", jobsRoutes);
+app.use("/api/ai-tier2", aiTierTwoRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "API is running" });

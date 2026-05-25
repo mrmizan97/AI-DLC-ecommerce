@@ -44,6 +44,13 @@ const SCHEDULES = [
 
   // Note: #8 wishlist-back-in-stock is event-driven (enqueued when stock
   // changes), not scheduled. See service/productService or productController.
+
+  // ── Tier 2 (AI) ──────────────────────────────────────────────────────
+  // A5 ai-review-summary — nightly map-reduce summarisation
+  { name: "ai-review-summary", cron: "0 4 * * *" },
+  // Note: A3 ai-product-enrichment is event-driven (on product create/update)
+  // Note: A6 embed-products is event-driven (on product create/update)
+  // Note: A4 ai-customer-support-rag is sync via /api/ai-tier2/support
 ];
 
 async function registerScheduledJobs() {

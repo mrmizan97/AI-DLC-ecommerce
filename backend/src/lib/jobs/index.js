@@ -15,6 +15,9 @@ const { runWishlistBackInStock } = require("./wishlistBackInStock");
 const { runOrphanMediaCleanup } = require("./orphanMediaCleanup");
 const { runAbandonedCartReminder } = require("./abandonedCartReminder");
 const { runFailedPaymentRetry } = require("./failedPaymentRetry");
+const { runEmbedProducts } = require("./embedProducts");
+const { runAiProductEnrichment } = require("./aiProductEnrichment");
+const { runAiReviewSummary } = require("./aiReviewSummary");
 
 // Map: BullMQ job name -> async (data) => result
 const handlers = {
@@ -29,6 +32,9 @@ const handlers = {
   "orphan-media-cleanup":    (d) => runOrphanMediaCleanup(d || {}),
   "abandoned-cart-reminder": (d) => runAbandonedCartReminder(d || {}),
   "failed-payment-retry":    (d) => runFailedPaymentRetry(d || {}),
+  "embed-products":          (d) => runEmbedProducts(d || {}),
+  "ai-product-enrichment":   (d) => runAiProductEnrichment(d || {}),
+  "ai-review-summary":       (d) => runAiReviewSummary(d || {}),
 };
 
 module.exports = { handlers };
