@@ -30,6 +30,21 @@ services:
       retries: 10
       start_period: 30s
 
+  # ── Redis (BullMQ jobs & scheduler) ──────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: ai_dlc_redis_dev
+    restart: unless-stopped
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis_data_dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   # ── Backend API (node --watch hot reload) ────────────────────────────────────
   backend:
     build:
@@ -39,6 +54,8 @@ services:
     restart: unless-stopped
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     environment:
       PORT: 3000
@@ -61,6 +78,7 @@ services:
       EMAIL_PASS: ${EMAIL_PASS:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      REDIS_URL: redis://redis:6379
     ports:
       - "4000:3000"
     volumes:
@@ -173,3 +191,4 @@ volumes:
   grafana_data_dev:
   loki_data_dev:
   jenkins_home_dev:
+  redis_data_dev:

@@ -125,6 +125,17 @@ const emailService = {
     }
   },
 
+  // Generic send used by scheduled jobs (daily report, abandoned cart, etc.).
+  // Returns { success, messageId? } so callers can count successes.
+  async sendCustom(to, subject, html) {
+    try {
+      return await send(to, subject, html);
+    } catch (err) {
+      console.error("[emailService] sendCustom error:", err.message);
+      return { success: false, message: err.message };
+    }
+  },
+
   async sendPasswordReset(user, resetToken) {
     try {
       const subject = "Password Reset Request";
