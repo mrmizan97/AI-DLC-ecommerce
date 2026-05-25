@@ -12,7 +12,8 @@
     "db:seed": "npx sequelize-cli db:seed:all",
     "db:seed:undo": "npx sequelize-cli db:seed:undo:all",
     "test": "jest --runInBand --forceExit --detectOpenHandles",
-    "worker": "node src/workerProcess.js"
+    "worker": "node src/workerProcess.js",
+    "smoke": "node tests/smoke/multiRoleSmoke.js"
   },
   "jest": {
     "testEnvironment": "node",
