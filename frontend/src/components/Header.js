@@ -18,6 +18,7 @@ import {
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
 import NotificationBell from "@/components/NotificationBell";
+import VoiceSearchButton from "@/components/VoiceSearchButton";
 import { getProfilePhoto } from "@/lib/media";
 import api from "@/lib/api";
 
@@ -110,6 +111,16 @@ export default function Header() {
     }
   };
 
+  // Called by VoiceSearchButton on every speech result. We mirror partial
+  // transcripts into the input box so the user sees what was heard, and
+  // auto-submit when the recognition session ends (final=true).
+  const handleVoice = (text, meta = {}) => {
+    setSearch(text);
+    if (meta.final && text.trim()) {
+      router.push(`/search?q=${encodeURIComponent(text.trim())}`);
+    }
+  };
+
   const handleLogout = () => {
     logout();
     router.push("/");
@@ -124,17 +135,24 @@ export default function Header() {
           </Link>
 
           <form onSubmit={handleSearch} className="flex-1 max-w-3xl">
-            <div className="relative flex">
+            <div className="relative flex bg-white rounded overflow-hidden">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search for products, brands, categories..."
-                className="flex-1 px-4 py-2 rounded-l bg-white text-gray-900 focus:outline-none"
+                className="flex-1 px-4 py-2 text-gray-900 focus:outline-none"
+              />
+              {/* Mic — Web Speech API in browsers that support it; otherwise
+                  records and POSTs to /api/voice/transcribe. */}
+              <VoiceSearchButton
+                onText={handleVoice}
+                className="border-l border-gray-200"
               />
               <button
                 type="submit"
-                className="bg-primary-dark hover:bg-orange-700 text-white px-5 rounded-r flex items-center"
+                aria-label="Search"
+                className="bg-primary-dark hover:bg-orange-700 text-white px-5 flex items-center"
               >
                 <Search size={20} />
               </button>
